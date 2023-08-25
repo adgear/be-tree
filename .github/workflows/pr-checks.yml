@@ -8,7 +8,7 @@ on:
 jobs:
   test:
     name: Run tests
-    runs-on: [self-hosted, ubuntu-22.04-medium]
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
       - run: |
