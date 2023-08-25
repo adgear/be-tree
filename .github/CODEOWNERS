@@ -2,4 +2,4 @@
 *  @adgear/cg-dsp-bidding-systems-greenfield
 
 # Pull in the eng practices team on GitHub Actions and CODEOWNERS
-/.github/ @adgear/cg-dsp-bidding-systems-greenfield
+/.github/  @adgear/prac-engineering
