@@ -1,10 +1,8 @@
 ---
 name: PR Checks
-on:  
+on:
   pull_request:
     types: [opened, edited, synchronize, reopened]
-
-
 jobs:
   test:
     name: Run tests
