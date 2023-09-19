@@ -115,7 +115,7 @@ At the end of this, we return a report with all the subscriptions id found to be
 
 
 ## How to run test benchmark
----
+
 ### Install required dependency(below step is for installing dependency in ubuntu 20.04)
 * Install valgrind
 
@@ -139,9 +139,9 @@ export LD_LIBRARY_PATH="/usr/local/lib/"
 ### Build test benchmark binary for execution
 * Run `make build-test-benchmark` for building the test binary
 
-### Input for testbenchmark binary
-* Test binary dependency on 4 files which are in data folder refer README.md file inside `data` folder for getting more information about each file and format
+### Input for test benchmark binary
+* Test binary dependency on 4 files which are in the data folder refer README.md file inside the `data` folder for more information about each file and format
 
-### How to run test
-* Once you have construct the all the test files inside data folder run `./testbenchmark` for running test. It would create be-tree and query it. Default number of times it would query would be 10. If wanted to modify then you need to pass command line argument. For running 1 time command is `./testbenchmark 1`
+### How to run the test
+* Once you have constructed all the test files inside the data folder run `./testbenchmark` to run a test. It would create a be-tree and query it. The default number of times it would query would be 10. If you want to modify then you need to pass a command line argument. For running 1-time command is `./testbenchmark 1`
 
