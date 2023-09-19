@@ -113,3 +113,35 @@ At the end of this, we return a report with all the subscriptions id found to be
 * betree_remove should remove useless preds from the memoize
 * What if we wrote the lexers/parsers to have the set of possible attributes directly since we know them. While we never use the string attribute during runtime, it slows insertion.
 
+
+## How to run test benchmark
+---
+### Install required dependency(below step is for installing dependency in ubuntu 20.04)
+* Install valgrind
+
+```bash
+sudo apt install valgrind
+```
+
+* Install gsl-2.7 library library
+```bash
+wget https://mirrors.tripadvisor.com/gnu/gsl/gsl-2.7.tar.gz
+tar -xf gsl-2.7.tar.gz
+cd gsl-2.7/
+./configure && make && make install
+```
+
+* Export gsl LD_LIBRARY_PATH
+```bash
+export LD_LIBRARY_PATH="/usr/local/lib/"
+```
+
+### Build test benchmark binary for execution
+* Run `make build-test-benchmark` for building the test binary
+
+### Input for testbenchmark binary
+* Test binary dependency on 4 files which are in data folder refer README.md file inside `data` folder for getting more information about each file and format
+
+### How to run test
+* Once you have construct the all the test files inside data folder run `./testbenchmark` for running test. It would create be-tree and query it. Default number of times it would query would be 10. If wanted to modify then you need to pass command line argument. For running 1 time command is `./testbenchmark 1`
+
