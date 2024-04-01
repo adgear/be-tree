@@ -305,7 +305,39 @@ bool sub_is_enclosed(const struct attr_domain** attr_domains, const struct betre
                 return cdir->bound.fmin <= bound.fmin && cdir->bound.fmax >= bound.fmax;
             }
             case(BETREE_BOOLEAN): {
-                return cdir->bound.bmin <= bound.bmin && cdir->bound.bmax >= bound.bmax;
+                //                       [false, false]                     [bound.bmin, bound.bmax]
+                // -------------------------------------------------------
+                // [false, false] [false, true] [true, true] [true, false]  [cdir->bound.bmin, cdir->bound.bmax]
+                // =======================================================
+                //      false           true         false        false     Result
+                //
+                //                       [false, true]                      [bound.bmin, bound.bmax]
+                // -------------------------------------------------------
+                // [false, false] [false, true] [true, true] [true, false]  [cdir->bound.bmin, cdir->bound.bmax]
+                // =======================================================
+                //     false           true         false        false      Result
+                //
+                //                       [true, true]                       [bound.bmin, bound.bmax]
+                // -------------------------------------------------------
+                // [false, false] [false, true] [true, true] [true, false]  [cdir->bound.bmin, cdir->bound.bmax]
+                // =======================================================
+                //     false           false        true         false      Result
+                //
+                //                       [true, false]                      [bound.bmin, bound.bmax]
+                // -------------------------------------------------------
+                // [false, false] [false, true] [true, true] [true, false]  [cdir->bound.bmin, cdir->bound.bmax]
+                // =======================================================
+                //     false           false        false         false     Result
+                if (!bound.bmin && !bound.bmax && !cdir->bound.bmin && cdir->bound.bmax) {
+                    return true;
+                }
+                if (!bound.bmin && bound.bmax && !cdir->bound.bmin && cdir->bound.bmax) {
+                    return true;
+                }
+                if (bound.bmin && bound.bmax && cdir->bound.bmin && cdir->bound.bmax) {
+                    return true;
+                }
+                return false;
             }
             case(BETREE_STRING):
             case(BETREE_STRING_LIST):

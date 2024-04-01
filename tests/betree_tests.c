@@ -1247,31 +1247,77 @@ int test_undefined_cdir_search()
 
     mu_assert(betree_insert(tree, 1, "not b && i = 10"), "");
 
-    mu_assert(tree->cnode->lnode->sub_count == 0 && tree->cnode->pdir != NULL
-            && tree->cnode->pdir->pnode_count == 1
-            && strcmp(tree->cnode->pdir->pnodes[0]->attr_var.attr, "b") == 0
-            && tree->cnode->pdir->pnodes[0]->cdir != NULL
-            && tree->cnode->pdir->pnodes[0]->cdir->lchild != NULL
-            && tree->cnode->pdir->pnodes[0]->cdir->lchild->cnode->pdir != NULL
-            && tree->cnode->pdir->pnodes[0]->cdir->lchild->cnode->pdir->pnode_count == 1
-            && strcmp(tree->cnode->pdir->pnodes[0]
-                          ->cdir->lchild->cnode->pdir->pnodes[0]
-                          ->attr_var.attr,
-                   "i")
-                == 0
-            && tree->cnode->pdir->pnodes[0]->cdir->lchild->cnode->pdir->pnodes[0]->cdir != NULL
-            && tree->cnode->pdir->pnodes[0]->cdir->lchild->cnode->pdir->pnodes[0]->cdir->lchild
-                != NULL
-            && tree->cnode->pdir->pnodes[0]
-                    ->cdir->lchild->cnode->pdir->pnodes[0]
-                    ->cdir->lchild->cnode->pdir
-                == NULL
-            && tree->cnode->pdir->pnodes[0]
-                    ->cdir->lchild->cnode->pdir->pnodes[0]
-                    ->cdir->lchild->cnode->lnode->sub_count
-                == 1,
-        "expected structure, split on b, all went in lchild for only false, first then i and split "
-        "into lchild/rchild");
+    mu_assert(tree->cnode->lnode->sub_count == 0, "");
+
+    mu_assert(tree->cnode->pdir != NULL, "");
+    mu_assert(tree->cnode->pdir->pnode_count == 1, "");
+    mu_assert(strcmp(tree->cnode->pdir->pnodes[0]->attr_var.attr, "b") == 0, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir != NULL, "");
+    mu_assert(strcmp(tree->cnode->pdir->pnodes[0]->cdir->attr_var.attr, "b") == 0, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->bound.bmin == false, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->bound.bmax == true, "");
+
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->lchild != NULL, "");
+    mu_assert(strcmp(tree->cnode->pdir->pnodes[0]->cdir->lchild->attr_var.attr, "b") == 0, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->lchild->bound.bmin == false, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->lchild->bound.bmax == false, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->lchild->cnode->pdir == NULL, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->lchild->cnode->lnode != NULL, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->lchild->cnode->lnode->sub_count == 0, "");
+
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->rchild != NULL, "");
+    mu_assert(strcmp(tree->cnode->pdir->pnodes[0]->cdir->rchild->attr_var.attr, "b") == 0, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->rchild->bound.bmin == true, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->rchild->bound.bmax == true, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->rchild->cnode->pdir == NULL, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->rchild->cnode->lnode != NULL, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->rchild->cnode->lnode->sub_count == 0, "");
+
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode != NULL, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir != NULL, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnode_count == 1, "");
+    mu_assert(strcmp(
+                  tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->attr_var.attr, "i") == 0, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->cdir != NULL, "");
+    mu_assert(strcmp(
+                  tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->
+                  cdir->attr_var.attr, "i") == 0, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->cdir->bound.imin == 0, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->cdir->bound.imax == 10, "");
+
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->cdir->lchild !=NULL, "");
+    mu_assert(strcmp(
+                  tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->
+                  cdir->lchild->attr_var.attr, "i") == 0, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->
+              cdir->lchild->bound.imin == 0, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->
+              cdir->lchild->bound.imax == 5, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->
+              cdir->lchild->cnode != NULL, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->
+              cdir->lchild->cnode->lnode != NULL, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->
+              cdir->lchild->cnode->lnode->sub_count == 1, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->
+              cdir->lchild->cnode->lnode->subs[0]->id == 0, "");
+
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->cdir->rchild !=NULL, "");
+    mu_assert(strcmp(
+                  tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->
+                  cdir->rchild->attr_var.attr, "i") == 0, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->
+              cdir->rchild->bound.imin == 5, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->
+              cdir->rchild->bound.imax == 10, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->
+              cdir->rchild->cnode != NULL, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->
+              cdir->rchild->cnode->lnode != NULL, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->
+              cdir->rchild->cnode->lnode->sub_count == 1, "");
+    mu_assert(tree->cnode->pdir->pnodes[0]->cdir->cnode->pdir->pnodes[0]->
+              cdir->rchild->cnode->lnode->subs[0]->id == 1, "");
 
     mu_assert(betree_search(tree, event, report), "");
 
