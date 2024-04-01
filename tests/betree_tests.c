@@ -1698,6 +1698,53 @@ int test_duplicate_unsorted_string_list()
     return 0;
 }
 
+// function sub_is_enclosed, tree.c, 'case(BETREE_BOOLEAN)'
+int test_4_expressions_matched()
+{
+    struct betree* tree = betree_make();
+
+    add_attr_domain_b(tree->config, "p1", false);
+    add_attr_domain_b(tree->config, "p2", false);
+    add_attr_domain_b(tree->config, "p3", false);
+
+    // p1 = true, p2 = true, p3 = false
+    const char* event_str = "{\"p1\":true,\"p2\":true,\"p3\":false}";
+
+    struct report* report = make_report();
+
+    const char* expr1 = "p1 or (p2 and p3)";
+    // manual calculation:
+    // p1 or (p2 and p3) = true or (true and false) = true
+    betree_sub_t id1 = 101;
+    mu_assert(betree_insert(tree, id1, expr1), "");
+
+    const char* expr2 = "(p3 and p1) or p2";
+    // manual calculation:
+    // (p3 and p1) or p2 = (false and true) or true = true
+    betree_sub_t id2 = 202;
+    mu_assert(betree_insert(tree, id2, expr2), "");
+
+    const char* expr3 = "(not (p3 and p1)) and p2";
+    // manual calculation:
+    // (not (p3 and p1)) and p2 = (not (false and true)) and true = true
+    betree_sub_t id3 = 303;
+    mu_assert(betree_insert(tree, id3, expr3), "");
+
+    const char* expr4 = "(p2 or p3) or p1";
+    // manual calculation:
+    // (p2 or p3) or p1 = (true or false) or true = true
+    betree_sub_t id4 = 404;
+    mu_assert(betree_insert(tree, id4, expr4), "");
+
+    mu_assert(betree_search(tree, event_str, report), "");
+    mu_assert(report->matched == 4, "");
+
+    free_report(report);
+    betree_free(tree);
+
+    return 0;
+}
+
 int all_tests()
 {
     mu_run_test(test_int_enum);
@@ -1743,6 +1790,7 @@ int all_tests()
     mu_run_test(test_frequency_bug);
     mu_run_test(test_duplicate_unsorted_integer_list);
     mu_run_test(test_duplicate_unsorted_string_list);
+    mu_run_test(test_4_expressions_matched);
 
     return 0;
 }
