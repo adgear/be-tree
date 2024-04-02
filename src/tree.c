@@ -305,6 +305,8 @@ bool sub_is_enclosed(const struct attr_domain** attr_domains, const struct betre
                 return cdir->bound.fmin <= bound.fmin && cdir->bound.fmax >= bound.fmax;
             }
             case(BETREE_BOOLEAN): {
+                // don't try to be smart
+                return false;
                 //                       [false, false]                     [bound.bmin, bound.bmax]
                 // -------------------------------------------------------
                 // [false, false] [false, true] [true, true] [true, false]  [cdir->bound.bmin, cdir->bound.bmax]
@@ -328,6 +330,7 @@ bool sub_is_enclosed(const struct attr_domain** attr_domains, const struct betre
                 // [false, false] [false, true] [true, true] [true, false]  [cdir->bound.bmin, cdir->bound.bmax]
                 // =======================================================
                 //     false           false        false         false     Result
+                /*
                 if (!bound.bmin && !bound.bmax && !cdir->bound.bmin && cdir->bound.bmax) {
                     return true;
                 }
@@ -338,6 +341,7 @@ bool sub_is_enclosed(const struct attr_domain** attr_domains, const struct betre
                     return true;
                 }
                 return false;
+                 */
             }
             case(BETREE_STRING):
             case(BETREE_STRING_LIST):
