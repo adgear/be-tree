@@ -1591,7 +1591,7 @@ static void get_variable_bound_inner(const struct attr_domain* domain,
     bool is_reversed,
     struct bound_dirty* dirty);
 
-static void get_variable_bound_inner_ast_bool_or(const struct attr_domain* domain,
+static void get_variable_bound_ast_bool_or(const struct attr_domain* domain,
     const struct ast_node* node,
     struct value_bound* bound,
     bool is_reversed,
@@ -1656,7 +1656,7 @@ static void get_variable_bound_inner_ast_bool_or(const struct attr_domain* domai
     return;
 }
 
-static void get_variable_bound_inner_ast_bool_and(const struct attr_domain* domain,
+static void get_variable_bound_ast_bool_and(const struct attr_domain* domain,
     const struct ast_node* node,
     struct value_bound* bound,
     bool is_reversed,
@@ -2119,17 +2119,17 @@ static void get_variable_bound_inner(const struct attr_domain* domain,
                     return;
                 case AST_BOOL_OR: {
                     if (is_reversed) {
-                        get_variable_bound_inner_ast_bool_and(domain, node, bound, is_reversed, dirty);
+                        get_variable_bound_ast_bool_and(domain, node, bound, is_reversed, dirty);
                     } else {
-                        get_variable_bound_inner_ast_bool_or(domain, node, bound, is_reversed, dirty);
+                        get_variable_bound_ast_bool_or(domain, node, bound, is_reversed, dirty);
                     }
                     return;
                 }
                 case AST_BOOL_AND: {
                     if (is_reversed) {
-                        get_variable_bound_inner_ast_bool_or(domain, node, bound, is_reversed, dirty);
+                        get_variable_bound_ast_bool_or(domain, node, bound, is_reversed, dirty);
                     } else {
-                        get_variable_bound_inner_ast_bool_and(domain, node, bound, is_reversed, dirty);
+                        get_variable_bound_ast_bool_and(domain, node, bound, is_reversed, dirty);
                     }
                     return;
                 }
