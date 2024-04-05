@@ -238,20 +238,6 @@ void match_be_tree_node_counting(const struct attr_domain** attr_domains,
     }
 }
 
-static bool is_event_enclosed_boolean(bool cdir_bmin, bool cdir_bmax, bool value)
-{
-    if(cdir_bmin == false && cdir_bmax == true) {
-        return true;
-    }
-    if(cdir_bmax == false) {
-        return value == false;
-    }
-    if(cdir_bmin == true) {
-        return value;
-    }
-    return false;
-}
-
 static bool is_event_enclosed(const struct betree_variable** preds, const struct cdir* cdir, bool open_left, bool open_right)
 {
     if(cdir == NULL) {
@@ -264,8 +250,7 @@ static bool is_event_enclosed(const struct betree_variable** preds, const struct
     // No open_left for smin because it's always 0
     switch(pred->value.value_type) {
         case BETREE_BOOLEAN:
-            return is_event_enclosed_boolean(cdir->bound.bmin, cdir->bound.bmax, pred->value.boolean_value);
-//            return (cdir->bound.bmin <= pred->value.boolean_value) && (cdir->bound.bmax >= pred->value.boolean_value);
+            return (cdir->bound.bmin <= pred->value.boolean_value) && (cdir->bound.bmax >= pred->value.boolean_value);
         case BETREE_INTEGER:
             return (open_left || cdir->bound.imin <= pred->value.integer_value) && (open_right || cdir->bound.imax >= pred->value.integer_value);
         case BETREE_FLOAT:
@@ -304,14 +289,6 @@ static bool is_event_enclosed(const struct betree_variable** preds, const struct
     return false;
 }
 
-static bool sub_is_enclosed_boolean(bool cdir_min, bool cdir_max, bool value_min, bool value_max)
-{
-    if(cdir_min == false && cdir_max == true) {
-        return true;
-    }
-    return false;
-}
-
 bool sub_is_enclosed(const struct attr_domain** attr_domains, const struct betree_sub* sub, const struct cdir* cdir)
 {
     if(cdir == NULL) {
@@ -328,9 +305,7 @@ bool sub_is_enclosed(const struct attr_domain** attr_domains, const struct betre
                 return cdir->bound.fmin <= bound.fmin && cdir->bound.fmax >= bound.fmax;
             }
             case(BETREE_BOOLEAN): {
-                return sub_is_enclosed_boolean(
-                    cdir->bound.bmin, cdir->bound.bmax,
-                    bound.bmin, bound.bmax);
+                return cdir->bound.bmin <= bound.bmin && cdir->bound.bmax >= bound.bmax;
             }
             case(BETREE_STRING):
             case(BETREE_STRING_LIST):
