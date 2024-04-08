@@ -1652,6 +1652,102 @@ int test_duplicate_unsorted_string_list()
     return 0;
 }
 
+int test_cdir_not_and()
+{
+    struct betree* tree = betree_make();
+
+    add_attr_domain_b(tree->config, "p1", false);
+    add_attr_domain_b(tree->config, "p2", false);
+    add_attr_domain_b(tree->config, "p3", false);
+
+    // p1 = true, p2 = true, p3 = false
+    const char* event_str = "{\"p1\":true,\"p2\":true,\"p3\":false}";
+
+    struct report* report = make_report();
+
+    const char* expr1 = "p1 or (p2 and p3)";
+    // p1 or (p2 and p3) = true or (true and false) = true
+    betree_sub_t id1 = 101;
+    mu_assert(betree_insert(tree, id1, expr1), "");
+
+    const char* expr2 = "(p3 and p1) or p2";
+    // (p3 and p1) or p2 = (false and true) or true = true
+    betree_sub_t id2 = 202;
+    mu_assert(betree_insert(tree, id2, expr2), "");
+
+    const char* expr3 = "(not (p3 and p1)) and p2";
+    // (not (p3 and p1)) and p2 = (not (false and true)) and true =
+    // = (not false) and true = true
+    betree_sub_t id3 = 303;
+    mu_assert(betree_insert(tree, id3, expr3), "");
+
+    const char* expr4 = "(p2 or p3) or p1";
+    // (p2 or p3) or p1 = (true or false) or true = true
+    betree_sub_t id4 = 404;
+    mu_assert(betree_insert(tree, id4, expr4), "");
+
+    mu_assert(betree_search(tree, event_str, report), "");
+    mu_assert(report->evaluated == 4, "");
+    mu_assert(report->matched == 4, "");
+    mu_assert(report->subs[0] == id1, "");
+    mu_assert(report->subs[1] == id2, "");
+    mu_assert(report->subs[2] == id4, "");
+    mu_assert(report->subs[3] == id3, "");
+
+    free_report(report);
+    betree_free(tree);
+
+    return 0;
+}
+
+int test_cdir_not_or()
+{
+    struct betree* tree = betree_make();
+
+    add_attr_domain_b(tree->config, "p1", false);
+    add_attr_domain_b(tree->config, "p2", false);
+    add_attr_domain_b(tree->config, "p3", false);
+
+    // p1 = false, p2 = true, p3 = false
+    const char* event_str = "{\"p1\":false,\"p2\":true,\"p3\":false}";
+
+    struct report* report = make_report();
+
+    const char* expr2 = "p1 or (p2 or p3)";
+    // p1 or (p2 or p3) = false or (true or false) = true
+    betree_sub_t id2 = 202;
+    mu_assert(betree_insert(tree, id2, expr2), "");
+
+    const char* expr3 = "(p1 and p2) or p3";
+    // (p1 and p2) or p3 = (false and true) or false = false
+    betree_sub_t id3 = 303;
+    mu_assert(betree_insert(tree, id3, expr3), "");
+
+    const char* expr4 = "(not ((not p1) and p3)) and p2";
+    // (not ((not p1) and p3)) and p2 = (not ((not false) and false)) and true =
+    // = (not (true and false)) and true = (not false) and true = true
+    betree_sub_t id4 = 404;
+    mu_assert(betree_insert(tree, id4, expr4), "");
+
+    const char* expr1 = "p2 and not (p3 or p1)";
+    // p2 and not (p3 or p1) = true and not (false or false) =
+    // = true and not false = true
+    betree_sub_t id1 = 101;
+    mu_assert(betree_insert(tree, id1, expr1), "");
+
+    mu_assert(betree_search(tree, event_str, report), "");
+    mu_assert(report->evaluated >= 3, "");
+    mu_assert(report->matched == 3, "");
+    mu_assert(report->subs[0] == id2, "");
+    mu_assert(report->subs[1] == id4, "");
+    mu_assert(report->subs[2] == id1, "");
+
+    free_report(report);
+    betree_free(tree);
+
+    return 0;
+}
+
 int all_tests()
 {
     mu_run_test(test_int_enum);
@@ -1697,6 +1793,8 @@ int all_tests()
     mu_run_test(test_frequency_bug);
     mu_run_test(test_duplicate_unsorted_integer_list);
     mu_run_test(test_duplicate_unsorted_string_list);
+    mu_run_test(test_cdir_not_and);
+    mu_run_test(test_cdir_not_or);
 
     return 0;
 }

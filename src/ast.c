@@ -1589,6 +1589,206 @@ static void get_variable_bound_inner(const struct attr_domain* domain,
     const struct ast_node* node,
     struct value_bound* bound,
     bool is_reversed,
+    struct bound_dirty* dirty);
+
+static void get_variable_bound_ast_bool_or(const struct attr_domain* domain,
+    const struct ast_node* node,
+    struct value_bound* bound,
+    bool is_reversed,
+    struct bound_dirty* dirty)
+{
+    struct value_bound lbound = { .value_type = bound->value_type };
+    struct bound_dirty ldirty = { .min_dirty = false, .max_dirty = false };
+    struct value_bound rbound = { .value_type = bound->value_type };
+    struct bound_dirty rdirty = { .min_dirty = false, .max_dirty = false };
+    get_variable_bound_inner(
+        domain, node->bool_expr.binary.lhs, &lbound, is_reversed, &ldirty);
+    get_variable_bound_inner(
+        domain, node->bool_expr.binary.rhs, &rbound, is_reversed, &rdirty);
+    if(ldirty.min_dirty == true && rdirty.min_dirty == true) {
+        dirty->min_dirty = true;
+        switch(bound->value_type) {
+            case BETREE_BOOLEAN:
+                bound->bmin = lbound.bmin && rbound.bmin;
+                break;
+            case BETREE_INTEGER:
+            case BETREE_INTEGER_LIST:
+                bound->imin = d64min(lbound.imin, rbound.imin);
+                break;
+            case BETREE_FLOAT:
+                bound->fmin = fmin(lbound.fmin, rbound.fmin);
+                break;
+            case BETREE_STRING:
+            case BETREE_STRING_LIST:
+            case BETREE_INTEGER_ENUM:
+                bound->smin = smin(lbound.smin, rbound.smin);
+                break;
+            case BETREE_SEGMENTS:
+            case BETREE_FREQUENCY_CAPS:
+            default:
+                break;
+        }
+    }
+    if(ldirty.max_dirty == true && rdirty.max_dirty == true) {
+        dirty->max_dirty = true;
+        switch(bound->value_type) {
+            case BETREE_BOOLEAN:
+                bound->bmax = lbound.bmax || rbound.bmax;
+                break;
+            case BETREE_INTEGER:
+            case BETREE_INTEGER_LIST:
+                bound->imax = d64max(lbound.imax, rbound.imax);
+                break;
+            case BETREE_FLOAT:
+                bound->fmax = fmax(lbound.fmax, rbound.fmax);
+                break;
+            case BETREE_STRING:
+            case BETREE_STRING_LIST:
+            case BETREE_INTEGER_ENUM:
+                bound->smax = smax(lbound.smax, rbound.smax);
+                break;
+            case BETREE_SEGMENTS:
+            case BETREE_FREQUENCY_CAPS:
+            default:
+                break;
+        }
+    }
+    return;
+}
+
+static void get_variable_bound_ast_bool_and(const struct attr_domain* domain,
+    const struct ast_node* node,
+    struct value_bound* bound,
+    bool is_reversed,
+    struct bound_dirty* dirty)
+{
+    struct value_bound lbound = { .value_type = bound->value_type };
+    struct bound_dirty ldirty = { .min_dirty = false, .max_dirty = false };
+    struct value_bound rbound = { .value_type = bound->value_type };
+    struct bound_dirty rdirty = { .min_dirty = false, .max_dirty = false };
+    get_variable_bound_inner(
+        domain, node->bool_expr.binary.lhs, &lbound, is_reversed, &ldirty);
+    get_variable_bound_inner(
+        domain, node->bool_expr.binary.rhs, &rbound, is_reversed, &rdirty);
+    if(ldirty.min_dirty == true || rdirty.min_dirty == true) {
+        dirty->min_dirty = true;
+        switch(bound->value_type) {
+            case BETREE_BOOLEAN:
+                if(ldirty.min_dirty == true && rdirty.min_dirty == true) {
+                    bound->bmin = lbound.bmin && rbound.bmin;
+                }
+                else if(ldirty.min_dirty == true) {
+                    bound->bmin = lbound.bmin;
+                }
+                else {
+                    bound->bmin = rbound.bmin;
+                }
+                break;
+            case BETREE_INTEGER:
+            case BETREE_INTEGER_LIST:
+                if(ldirty.min_dirty == true && rdirty.min_dirty == true) {
+                    bound->imin = d64min(lbound.imin, rbound.imin);
+                }
+                else if(ldirty.min_dirty == true) {
+                    bound->imin = lbound.imin;
+                }
+                else {
+                    bound->imin = rbound.imin;
+                }
+                break;
+            case BETREE_FLOAT:
+                if(ldirty.min_dirty == true && rdirty.min_dirty == true) {
+                    bound->fmin = fmin(lbound.fmin, rbound.fmin);
+                }
+                else if(ldirty.min_dirty == true) {
+                    bound->fmin = lbound.fmin;
+                }
+                else {
+                    bound->fmin = rbound.fmin;
+                }
+                break;
+            case BETREE_STRING:
+            case BETREE_STRING_LIST:
+            case BETREE_INTEGER_ENUM:
+                if(ldirty.min_dirty == true && rdirty.min_dirty == true) {
+                    bound->smin = smin(lbound.smin, rbound.smin);
+                }
+                else if(ldirty.min_dirty == true) {
+                    bound->smin = lbound.smin;
+                }
+                else {
+                    bound->smin = rbound.smin;
+                }
+                break;
+            case BETREE_SEGMENTS:
+            case BETREE_FREQUENCY_CAPS:
+            default:
+                break;
+        }
+    }
+    if(ldirty.max_dirty == true || rdirty.max_dirty == true) {
+        dirty->max_dirty = true;
+        switch(bound->value_type) {
+            case BETREE_BOOLEAN:
+                if(ldirty.max_dirty == true && rdirty.max_dirty == true) {
+                    bound->bmax = lbound.bmax || rbound.bmax;
+                }
+                else if(ldirty.max_dirty == true) {
+                    bound->bmax = lbound.bmax;
+                }
+                else {
+                    bound->bmax = rbound.bmax;
+                }
+                break;
+            case BETREE_INTEGER:
+            case BETREE_INTEGER_LIST:
+                if(ldirty.max_dirty == true && rdirty.max_dirty == true) {
+                    bound->imax = d64max(lbound.imax, rbound.imax);
+                }
+                else if(ldirty.max_dirty == true) {
+                    bound->imax = lbound.imax;
+                }
+                else {
+                    bound->imax = rbound.imax;
+                }
+                break;
+            case BETREE_FLOAT:
+                if(ldirty.max_dirty == true && rdirty.max_dirty == true) {
+                    bound->fmax = fmax(lbound.fmax, rbound.fmax);
+                }
+                else if(ldirty.max_dirty == true) {
+                    bound->fmax = lbound.fmax;
+                }
+                else {
+                    bound->fmax = rbound.fmax;
+                }
+                break;
+            case BETREE_STRING:
+            case BETREE_STRING_LIST:
+            case BETREE_INTEGER_ENUM:
+                if(ldirty.max_dirty == true && rdirty.max_dirty == true) {
+                    bound->smax = smax(lbound.smax, rbound.smax);
+                }
+                else if(ldirty.max_dirty == true) {
+                    bound->smax = lbound.smax;
+                }
+                else {
+                    bound->smax = rbound.smax;
+                }
+                break;
+            case BETREE_SEGMENTS:
+            case BETREE_FREQUENCY_CAPS:
+            default:
+                break;
+        }
+    }
+    return;
+}
+
+static void get_variable_bound_inner(const struct attr_domain* domain,
+    const struct ast_node* node,
+    struct value_bound* bound,
+    bool is_reversed,
     struct bound_dirty* dirty)
 {
     if(node == NULL) {
@@ -1918,184 +2118,18 @@ static void get_variable_bound_inner(const struct attr_domain* domain,
                         domain, node->bool_expr.unary.expr, bound, !is_reversed, dirty);
                     return;
                 case AST_BOOL_OR: {
-                    struct value_bound lbound = { .value_type = bound->value_type };
-                    struct bound_dirty ldirty = { .min_dirty = false, .max_dirty = false };
-                    struct value_bound rbound = { .value_type = bound->value_type };
-                    struct bound_dirty rdirty = { .min_dirty = false, .max_dirty = false };
-                    get_variable_bound_inner(
-                        domain, node->bool_expr.binary.lhs, &lbound, is_reversed, &ldirty);
-                    get_variable_bound_inner(
-                        domain, node->bool_expr.binary.rhs, &rbound, is_reversed, &rdirty);
-                    if(ldirty.min_dirty == true && rdirty.min_dirty == true) {
-                        dirty->min_dirty = true;
-                        switch(bound->value_type) {
-                            case BETREE_BOOLEAN:
-                                bound->bmin = lbound.bmin && rbound.bmin;
-                                break;
-                            case BETREE_INTEGER:
-                            case BETREE_INTEGER_LIST:
-                                bound->imin = d64min(lbound.imin, rbound.imin);
-                                break;
-                            case BETREE_FLOAT:
-                                bound->fmin = fmin(lbound.fmin, rbound.fmin);
-                                break;
-                            case BETREE_STRING:
-                            case BETREE_STRING_LIST:
-                            case BETREE_INTEGER_ENUM:
-                                bound->smin = smin(lbound.smin, rbound.smin);
-                                break;
-                            case BETREE_SEGMENTS:
-                            case BETREE_FREQUENCY_CAPS:
-                            default:
-                                break;
-                        }
-                    }
-                    if(ldirty.max_dirty == true && rdirty.max_dirty == true) {
-                        dirty->max_dirty = true;
-                        switch(bound->value_type) {
-                            case BETREE_BOOLEAN:
-                                bound->bmax = lbound.bmax || rbound.bmax;
-                                break;
-                            case BETREE_INTEGER:
-                            case BETREE_INTEGER_LIST:
-                                bound->imax = d64max(lbound.imax, rbound.imax);
-                                break;
-                            case BETREE_FLOAT:
-                                bound->fmax = fmax(lbound.fmax, rbound.fmax);
-                                break;
-                            case BETREE_STRING:
-                            case BETREE_STRING_LIST:
-                            case BETREE_INTEGER_ENUM:
-                                bound->smax = smax(lbound.smax, rbound.smax);
-                                break;
-                            case BETREE_SEGMENTS:
-                            case BETREE_FREQUENCY_CAPS:
-                            default:
-                                break;
-                        }
+                    if (is_reversed) {
+                        get_variable_bound_ast_bool_and(domain, node, bound, is_reversed, dirty);
+                    } else {
+                        get_variable_bound_ast_bool_or(domain, node, bound, is_reversed, dirty);
                     }
                     return;
                 }
                 case AST_BOOL_AND: {
-                    struct value_bound lbound = { .value_type = bound->value_type };
-                    struct bound_dirty ldirty = { .min_dirty = false, .max_dirty = false };
-                    struct value_bound rbound = { .value_type = bound->value_type };
-                    struct bound_dirty rdirty = { .min_dirty = false, .max_dirty = false };
-                    get_variable_bound_inner(
-                        domain, node->bool_expr.binary.lhs, &lbound, is_reversed, &ldirty);
-                    get_variable_bound_inner(
-                        domain, node->bool_expr.binary.rhs, &rbound, is_reversed, &rdirty);
-                    if(ldirty.min_dirty == true || rdirty.min_dirty == true) {
-                        dirty->min_dirty = true;
-                        switch(bound->value_type) {
-                            case BETREE_BOOLEAN:
-                                if(ldirty.min_dirty == true && rdirty.min_dirty == true) {
-                                    bound->bmin = lbound.bmin && rbound.bmin;
-                                }
-                                else if(ldirty.min_dirty == true) {
-                                    bound->bmin = lbound.bmin;
-                                }
-                                else {
-                                    bound->bmin = rbound.bmin;
-                                }
-                                break;
-                            case BETREE_INTEGER:
-                            case BETREE_INTEGER_LIST:
-                                if(ldirty.min_dirty == true && rdirty.min_dirty == true) {
-                                    bound->imin = d64min(lbound.imin, rbound.imin);
-                                }
-                                else if(ldirty.min_dirty == true) {
-                                    bound->imin = lbound.imin;
-                                }
-                                else {
-                                    bound->imin = rbound.imin;
-                                }
-                                break;
-                            case BETREE_FLOAT:
-                                if(ldirty.min_dirty == true && rdirty.min_dirty == true) {
-                                    bound->fmin = fmin(lbound.fmin, rbound.fmin);
-                                }
-                                else if(ldirty.min_dirty == true) {
-                                    bound->fmin = lbound.fmin;
-                                }
-                                else {
-                                    bound->fmin = rbound.fmin;
-                                }
-                                break;
-                            case BETREE_STRING:
-                            case BETREE_STRING_LIST:
-                            case BETREE_INTEGER_ENUM:
-                                if(ldirty.min_dirty == true && rdirty.min_dirty == true) {
-                                    bound->smin = smin(lbound.smin, rbound.smin);
-                                }
-                                else if(ldirty.min_dirty == true) {
-                                    bound->smin = lbound.smin;
-                                }
-                                else {
-                                    bound->smin = rbound.smin;
-                                }
-                                break;
-                            case BETREE_SEGMENTS:
-                            case BETREE_FREQUENCY_CAPS:
-                            default:
-                                break;
-                        }
-                    }
-                    if(ldirty.max_dirty == true || rdirty.max_dirty == true) {
-                        dirty->max_dirty = true;
-                        switch(bound->value_type) {
-                            case BETREE_BOOLEAN:
-                                if(ldirty.max_dirty == true && rdirty.max_dirty == true) {
-                                    bound->bmax = lbound.bmax || rbound.bmax;
-                                }
-                                else if(ldirty.max_dirty == true) {
-                                    bound->bmax = lbound.bmax;
-                                }
-                                else {
-                                    bound->bmax = rbound.bmax;
-                                }
-                                break;
-                            case BETREE_INTEGER:
-                            case BETREE_INTEGER_LIST:
-                                if(ldirty.max_dirty == true && rdirty.max_dirty == true) {
-                                    bound->imax = d64max(lbound.imax, rbound.imax);
-                                }
-                                else if(ldirty.max_dirty == true) {
-                                    bound->imax = lbound.imax;
-                                }
-                                else {
-                                    bound->imax = rbound.imax;
-                                }
-                                break;
-                            case BETREE_FLOAT:
-                                if(ldirty.max_dirty == true && rdirty.max_dirty == true) {
-                                    bound->fmax = fmax(lbound.fmax, rbound.fmax);
-                                }
-                                else if(ldirty.max_dirty == true) {
-                                    bound->fmax = lbound.fmax;
-                                }
-                                else {
-                                    bound->fmax = rbound.fmax;
-                                }
-                                break;
-                            case BETREE_STRING:
-                            case BETREE_STRING_LIST:
-                            case BETREE_INTEGER_ENUM:
-                                if(ldirty.max_dirty == true && rdirty.max_dirty == true) {
-                                    bound->smax = smax(lbound.smax, rbound.smax);
-                                }
-                                else if(ldirty.max_dirty == true) {
-                                    bound->smax = lbound.smax;
-                                }
-                                else {
-                                    bound->smax = rbound.smax;
-                                }
-                                break;
-                            case BETREE_SEGMENTS:
-                            case BETREE_FREQUENCY_CAPS:
-                            default:
-                                break;
-                        }
+                    if (is_reversed) {
+                        get_variable_bound_ast_bool_or(domain, node, bound, is_reversed, dirty);
+                    } else {
+                        get_variable_bound_ast_bool_and(domain, node, bound, is_reversed, dirty);
                     }
                     return;
                 }
