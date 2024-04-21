@@ -1854,7 +1854,7 @@ void free_memoize(struct memoize memoize)
     bfree(memoize.fail);
 }
 
-static uint64_t* make_undefined(size_t attr_domain_count, const struct betree_variable** preds)
+uint64_t* make_undefined(size_t attr_domain_count, const struct betree_variable** preds)
 {
     size_t count = attr_domain_count / 64 + 1;
     uint64_t* undefined = bcalloc(count * sizeof(*undefined));
@@ -1878,7 +1878,7 @@ uint64_t* make_undefined_with_count(size_t attr_domain_count, const struct betre
     return undefined;
 }
 
-static void add_sub(betree_sub_t id, struct report* report)
+void add_sub(betree_sub_t id, struct report* report)
 {
     if(report->matched == 0) {
         report->subs = bcalloc(sizeof(*report->subs));

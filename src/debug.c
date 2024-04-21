@@ -701,7 +701,7 @@ struct gathered_subs {
     struct betree_sub** subs;
 };
 
-static void add_sub(const struct betree_sub* sub, struct gathered_subs* gatherer)
+static void add_sub_debug(const struct betree_sub* sub, struct gathered_subs* gatherer)
 {
     if(gatherer->count == 0) {
         gatherer->subs = bcalloc(sizeof(*gatherer->subs));
@@ -754,7 +754,7 @@ static void gather_subs_pdir(const struct pdir* pdir, struct gathered_subs* gath
 static void gather_subs_cnode(const struct cnode* cnode, struct gathered_subs* gatherer)
 {
     for(size_t i = 0; i < cnode->lnode->sub_count; i++) {
-        add_sub(cnode->lnode->subs[i], gatherer);
+        add_sub_debug(cnode->lnode->subs[i], gatherer);
     }
     if(cnode->pdir != NULL) {
         gather_subs_pdir(cnode->pdir, gatherer);
