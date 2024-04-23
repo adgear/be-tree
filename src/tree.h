@@ -91,6 +91,7 @@ struct subs_to_eval {
 
 void init_subs_to_eval(struct subs_to_eval* subs);
 void init_subs_to_eval_ext(struct subs_to_eval* subs, size_t init);
+uint64_t* make_undefined(size_t attr_domain_count, const struct betree_variable** preds);
 uint64_t* make_undefined_with_count(size_t attr_domain_count, const struct betree_variable** preds, size_t* count);
 struct memoize make_memoize_with_count(size_t pred_count, size_t* count);
 void match_be_tree(const struct attr_domain** attr_domains,
@@ -115,6 +116,7 @@ bool match_sub_counting(size_t attr_domains_count,
     const uint64_t* undefined);
 void add_sub_counting(betree_sub_t id, struct report_counting* report);
 
+void add_sub(betree_sub_t id, struct report* report);
 void free_sub(struct betree_sub* sub);
 void free_event(struct betree_event* event);
 
