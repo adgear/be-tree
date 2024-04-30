@@ -79,7 +79,7 @@ neato:
 	#$(CC) -shared $(OBJECTS) -o $@
 
 build/libbetree.a: build $(OBJECTS)
-	ar rcs $@ $(OBJECTS)
+	$(AR) rcs $@ $(OBJECTS)
 
 build:
 	mkdir -p build
