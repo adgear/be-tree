@@ -604,6 +604,7 @@ bool betree_search(const struct betree* tree, const char* event_str, struct repo
 {
     struct betree_event* event = make_event_from_string(tree, event_str);
     bool result = betree_search_with_event_filled(tree, event, report);
+    //need to add arraylist
     free_event(event);
     return result;
 }
