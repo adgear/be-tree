@@ -17,6 +17,9 @@
 #include "utils.h"
 #include "value.h"
 
+#include "arraylist.h"
+#include "hashtable.h"
+
 /*bool betree_delete(struct betree* betree, betree_sub_t id)*/
 /*{*/
     /*struct betree_sub* sub = find_sub_id(id, betree->cnode);*/
@@ -556,6 +559,18 @@ const struct betree_variable** make_environment(size_t attr_domain_count, const 
     return preds;
 }
 
+static bool betree_search_with_event_filled_error_reason(
+    const struct betree* betree, struct betree_event* event, struct report* report, hashtable* reason_subid_list)
+{
+    const struct betree_variable** variables
+        = make_environment(betree->config->attr_domain_count, event);
+    if(validate_variables(betree->config, variables) == false) {
+        fprintf(stderr, "Failed to validate event\n");
+        return false;
+    }
+    return betree_search_with_preds(betree->config, variables, betree->cnode, report);
+}
+
 static bool betree_search_with_event_filled(const struct betree* betree, struct betree_event* event, struct report* report)
 {
     const struct betree_variable** variables
@@ -604,7 +619,15 @@ bool betree_search(const struct betree* tree, const char* event_str, struct repo
 {
     struct betree_event* event = make_event_from_string(tree, event_str);
     bool result = betree_search_with_event_filled(tree, event, report);
-    //need to add arraylist
+    free_event(event);
+    return result;
+}
+
+bool betree_search_with_error_reason(const struct betree* tree, const char* event_str, struct report* report)
+{
+    struct betree_event* event = make_event_from_string(tree, event_str);
+	hashtable* reason_subid_list = hashtable_create();
+    bool result = betree_search_with_event_filled_error_reason(tree, event, report, &reason_subid_list[0]);
     free_event(event);
     return result;
 }
