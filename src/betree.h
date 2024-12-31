@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include "arraylist.h"
+#include "hashtable.h"
 
 typedef uint64_t betree_sub_t;
 
@@ -131,6 +133,7 @@ bool betree_insert(struct betree* tree, betree_sub_t id, const char* expr);
 bool betree_insert_with_constants(struct betree* tree, betree_sub_t id, size_t constant_count, const struct betree_constant** constants, const char* expr);
 
 bool betree_search(const struct betree* tree, const char* event_str, struct report* report);
+bool betree_search_with_error_reason(const struct betree* tree, const char* event_str, struct report* report);
 bool betree_search_ids(const struct betree* tree, const char* event_str, struct report* report, const uint64_t* ids, size_t sz);
 bool betree_search_with_event(const struct betree* betree, struct betree_event* event, struct report* report);
 bool betree_search_with_event_ids(const struct betree* betree, struct betree_event* event, struct report* report, const uint64_t* ids, size_t sz);

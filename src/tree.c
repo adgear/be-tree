@@ -96,6 +96,30 @@ bool match_sub(size_t attr_domains_count,
     return result;
 }
 
+bool match_sub_error_reason(size_t attr_domains_count,
+    const struct betree_variable** preds,
+    const struct betree_sub* sub,
+    struct report* report,
+    struct memoize* memoize,
+    const uint64_t* undefined,
+    hashtable* reason_subid_list)
+{
+    enum short_circuit_e short_circuit = try_short_circuit(attr_domains_count, &sub->short_circuit, undefined);
+    if(short_circuit != SHORT_CIRCUIT_NONE) {
+        if(report != NULL) {
+            report->shorted++;
+        }
+        if(short_circuit == SHORT_CIRCUIT_PASS) {
+            return true;
+        }
+        if(short_circuit == SHORT_CIRCUIT_FAIL) {
+            return false;
+        }
+    }
+    bool result = match_node_error_reason(preds, sub->expr, memoize, report, reason_subid_list, sub->id);
+    return result;
+}
+
 bool match_sub_counting(size_t attr_domains_count,
     const struct betree_variable** preds,
     const struct betree_sub* sub,
@@ -1936,6 +1960,31 @@ bool betree_search_with_preds(const struct config* config,
         const struct betree_sub* sub = subs.subs[i];
         report->evaluated++;
         if(match_sub(config->attr_domain_count, preds, sub, report, &memoize, undefined) == true) {
+            add_sub(sub->id, report);
+        }
+    }
+    bfree(subs.subs);
+    free_memoize(memoize);
+    bfree(undefined);
+    bfree(preds);
+    return true;
+}
+
+bool betree_search_with_preds_error_reason(const struct config* config,
+    const struct betree_variable** preds,
+    const struct cnode* cnode,
+    struct report* report,
+    hashtable* reason_subid_list)
+{
+    uint64_t* undefined = make_undefined(config->attr_domain_count, preds);
+    struct memoize memoize = make_memoize(config->pred_map->memoize_count);
+    struct subs_to_eval subs;
+    init_subs_to_eval(&subs);
+    match_be_tree((const struct attr_domain**)config->attr_domains, preds, cnode, &subs);
+    for(size_t i = 0; i < subs.count; i++) {
+        const struct betree_sub* sub = subs.subs[i];
+        report->evaluated++;
+        if(match_sub_error_reason(config->attr_domain_count, preds, sub, report, &memoize, undefined, reason_subid_list) == true) {
             add_sub(sub->id, report);
         }
     }

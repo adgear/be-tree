@@ -17,9 +17,6 @@
 #include "utils.h"
 #include "value.h"
 
-#include "arraylist.h"
-#include "hashtable.h"
-
 /*bool betree_delete(struct betree* betree, betree_sub_t id)*/
 /*{*/
     /*struct betree_sub* sub = find_sub_id(id, betree->cnode);*/
@@ -568,7 +565,7 @@ static bool betree_search_with_event_filled_error_reason(
         fprintf(stderr, "Failed to validate event\n");
         return false;
     }
-    return betree_search_with_preds(betree->config, variables, betree->cnode, report);
+    return betree_search_with_preds_error_reason(betree->config, variables, betree->cnode, report, reason_subid_list);
 }
 
 static bool betree_search_with_event_filled(const struct betree* betree, struct betree_event* event, struct report* report)
@@ -627,7 +624,7 @@ bool betree_search_with_error_reason(const struct betree* tree, const char* even
 {
     struct betree_event* event = make_event_from_string(tree, event_str);
 	hashtable* reason_subid_list = hashtable_create();
-    bool result = betree_search_with_event_filled_error_reason(tree, event, report, &reason_subid_list[0]);
+    bool result = betree_search_with_event_filled_error_reason(tree, event, report, reason_subid_list);
     free_event(event);
     return result;
 }

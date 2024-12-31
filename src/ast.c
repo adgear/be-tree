@@ -642,6 +642,138 @@ static bool match_special_expr(
     }
 }
 
+static bool match_special_expr_error_reason(
+    const struct betree_variable** preds, const struct ast_special_expr special_expr, hashtable* reason_subid_list, betree_sub_t sub_id)
+{
+    switch(special_expr.type) {
+        case AST_SPECIAL_FREQUENCY: {
+            switch(special_expr.frequency.op) {
+                case AST_SPECIAL_WITHINFREQUENCYCAP: {
+                    const struct ast_special_frequency* f = &special_expr.frequency;
+                    struct betree_frequency_caps* caps;
+                    bool is_caps_defined = get_frequency_var(f->attr_var.var, preds, &caps);
+                    const struct betree_variable* pred = preds[special_expr.frequency.attr_var.var];
+                    char* variable_name = pred->attr_var.attr;
+                    if(is_caps_defined == false) {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                        return false;
+                    }
+                    if(caps->size == 0) {
+                        // Optimization from looking at what within_frequency_caps does
+                        return true;
+                    }
+                    int64_t now;
+                    bool is_now_defined = get_integer_var(f->now.var, preds, &now);
+                    if(is_now_defined == false) {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                        return false;
+                    }
+                    if(within_frequency_caps(
+                        caps, f->type, f->id, f->ns, f->value, f->length, now) == false)
+                        {
+                            set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                        }
+                    return within_frequency_caps(
+                        caps, f->type, f->id, f->ns, f->value, f->length, now);
+                }
+                default: abort();
+            }
+        }
+        case AST_SPECIAL_SEGMENT: {
+            const struct betree_variable* pred = preds[special_expr.segment.attr_var.var];
+            char* variable_name = pred->attr_var.attr;
+            const struct ast_special_segment* s = &special_expr.segment;
+            struct betree_segments* segments;
+            bool is_segment_defined = get_segments_var(s->attr_var.var, preds, &segments);
+            if(is_segment_defined == false) {
+                set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                return false;
+            }
+            int64_t now;
+            bool is_now_defined = get_integer_var(s->now.var, preds, &now);
+            if(is_now_defined == false) {
+                set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                return false;
+            }
+            switch(special_expr.segment.op) {
+                case AST_SPECIAL_SEGMENTWITHIN:
+                    if(segment_within(s->segment_id, s->seconds, segments, now) == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return segment_within(s->segment_id, s->seconds, segments, now);
+                case AST_SPECIAL_SEGMENTBEFORE:
+                    if(segment_before(s->segment_id, s->seconds, segments, now) == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return segment_before(s->segment_id, s->seconds, segments, now);
+                default: abort();
+            }
+        }
+        case AST_SPECIAL_GEO: {
+            switch(special_expr.geo.op) {
+                case AST_SPECIAL_GEOWITHINRADIUS: {
+                    char* variable_name = "geo";
+                    const struct ast_special_geo* g = &special_expr.geo;
+                    double latitude_var, longitude_var;
+                    bool is_latitude_defined
+                        = get_float_var(g->latitude_var.var, preds, &latitude_var);
+                    bool is_longitude_defined
+                        = get_float_var(g->longitude_var.var, preds, &longitude_var);
+                    if(is_latitude_defined == false || is_longitude_defined == false) {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                        return false;
+                    }
+                    if(geo_within_radius(
+                        g->latitude, g->longitude, latitude_var, longitude_var, g->radius) == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return geo_within_radius(
+                        g->latitude, g->longitude, latitude_var, longitude_var, g->radius);
+                }
+                default: abort();
+            }
+            return false;
+        }
+        case AST_SPECIAL_STRING: {
+            const struct betree_variable* pred = preds[special_expr.string.attr_var.var];
+            char* variable_name = pred->attr_var.attr;
+            const struct ast_special_string* s = &special_expr.string;
+            struct string_value value;
+            bool is_string_defined = get_string_var(s->attr_var.var, preds, &value);
+            if(is_string_defined == false) {
+                set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                return false;
+            }
+            switch(s->op) {
+                case AST_SPECIAL_CONTAINS:
+                    if(contains(value.string, s->pattern) == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return contains(value.string, s->pattern);
+                case AST_SPECIAL_STARTSWITH:
+                    if(starts_with(value.string, s->pattern) == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return starts_with(value.string, s->pattern);
+                case AST_SPECIAL_ENDSWITH:
+                    if(ends_with(value.string, s->pattern) == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return ends_with(value.string, s->pattern);
+                default: abort();
+            }
+            return false;
+        }
+        default: abort();
+    }
+}
+
 static bool match_special_expr_counting(
     const struct betree_variable** preds, const struct ast_special_expr special_expr,
     int* ops_count)
@@ -1062,6 +1194,81 @@ static bool match_list_expr(
     }
 }
 
+static bool match_list_expr_error_reason(
+    const struct betree_variable** preds, const struct ast_list_expr list_expr,
+    hashtable* reason_subid_list, betree_sub_t sub_id)
+{
+    const struct betree_variable* pred = preds[list_expr.attr_var.var];
+    char* variable_name = pred->attr_var.attr;
+    struct value variable;
+    bool is_variable_defined = get_variable(list_expr.attr_var.var, preds, &variable);
+    if(is_variable_defined == false) {
+        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+        return false;
+    }
+    switch(list_expr.op) {
+        case AST_LIST_ONE_OF:
+        case AST_LIST_NONE_OF: {
+            bool result = false;
+            switch(list_expr.value.value_type) {
+                case AST_LIST_VALUE_INTEGER_LIST: 
+                    result = match_not_all_of_int(variable, list_expr);
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    break;
+                case AST_LIST_VALUE_STRING_LIST: {
+                    result = match_not_all_of_string(variable, list_expr);
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    break;
+                }
+                default: abort();
+            }
+            switch(list_expr.op) {
+                case AST_LIST_ONE_OF:
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return result;
+                case AST_LIST_NONE_OF:
+                    if(!result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return !result;
+                case AST_LIST_ALL_OF:
+                    invalid_expr("Should never happen");
+                    set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    return false;
+                default: abort();
+            }
+        }
+        case AST_LIST_ALL_OF: {
+            switch(list_expr.value.value_type) {
+                case AST_LIST_VALUE_INTEGER_LIST:
+                    if(match_all_of_int(variable, list_expr) == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return match_all_of_int(variable, list_expr);
+                case AST_LIST_VALUE_STRING_LIST:
+                    if(match_all_of_string(variable, list_expr) == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return match_all_of_string(variable, list_expr);
+                default: abort();
+            }
+        }
+        default: abort();
+    }
+}
+
 static bool match_list_expr_counting(
     const struct betree_variable** preds, const struct ast_list_expr list_expr,
     int* ops_count)
@@ -1160,6 +1367,79 @@ static bool match_set_expr(const struct betree_variable** preds, const struct as
             return !is_in;
         }
         case AST_SET_IN: {
+            return is_in;
+        }
+        default: abort();
+    }
+}
+
+static bool match_set_expr_error_reason(const struct betree_variable** preds, const struct ast_set_expr set_expr,
+hashtable* reason_subid_list, betree_sub_t sub_id)
+{
+    struct set_left_value left = set_expr.left_value;
+    struct set_right_value right = set_expr.right_value;
+    bool is_in;
+
+    const struct betree_variable* pred = preds[left.variable_value.var];
+    char* variable_name = pred->attr_var.attr;
+    if(left.value_type == AST_SET_LEFT_VALUE_INTEGER
+        && right.value_type == AST_SET_RIGHT_VALUE_VARIABLE) {
+        struct betree_integer_list* variable;
+        bool is_variable_defined = get_integer_list_var(right.variable_value.var, preds, &variable);
+        if(is_variable_defined == false) {
+            set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+            return false;
+        }
+        is_in = integer_in_integer_list(left.integer_value, variable);
+    }
+    else if(left.value_type == AST_SET_LEFT_VALUE_STRING
+        && right.value_type == AST_SET_RIGHT_VALUE_VARIABLE) {
+        struct betree_string_list* variable;
+        bool is_variable_defined = get_string_list_var(right.variable_value.var, preds, &variable);
+        if(is_variable_defined == false) {
+            set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+            return false;
+        }
+        is_in = string_in_string_list(left.string_value, variable);
+    }
+    else if(left.value_type == AST_SET_LEFT_VALUE_VARIABLE
+        && right.value_type == AST_SET_RIGHT_VALUE_INTEGER_LIST) {
+        int64_t variable;
+        bool is_variable_defined = get_integer_var(left.variable_value.var, preds, &variable);
+        if(is_variable_defined == false) {
+            set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+            return false;
+        }
+        is_in = integer_in_integer_list(variable, right.integer_list_value);
+    }
+    else if(left.value_type == AST_SET_LEFT_VALUE_VARIABLE
+        && right.value_type == AST_SET_RIGHT_VALUE_STRING_LIST) {
+        struct string_value variable;
+        bool is_variable_defined = get_string_var(left.variable_value.var, preds, &variable);
+        if(is_variable_defined == false) {
+            set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+            return false;
+        }
+        is_in = string_in_string_list(variable, right.string_list_value);
+    }
+    else {
+        invalid_expr("invalid set expression");
+        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+        return false;
+    }
+    switch(set_expr.op) {
+        case AST_SET_NOT_IN: {
+            if(!is_in == false)
+            {
+                set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+            }
+            return !is_in;
+        }
+        case AST_SET_IN: {
+            if(is_in == false)
+            {
+                set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+            }
             return is_in;
         }
         default: abort();
@@ -1289,6 +1569,99 @@ static bool match_compare_expr(
     }
 }
 
+static bool match_compare_expr_error_reason(
+    const struct betree_variable** preds, const struct ast_compare_expr compare_expr, hashtable* reason_subid_list, betree_sub_t sub_id)
+{
+    const struct betree_variable* pred = preds[compare_expr.attr_var.var];
+    char* variable_name = pred->attr_var.attr;
+    struct value variable;
+    bool is_variable_defined = get_variable(compare_expr.attr_var.var, preds, &variable);
+    if(is_variable_defined == false) {
+        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+        return false;
+    }
+    switch(compare_expr.op) {
+        case AST_COMPARE_LT: {
+            switch(compare_expr.value.value_type) {
+                case AST_COMPARE_VALUE_INTEGER: {
+                    bool result = variable.integer_value < compare_expr.value.integer_value;
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return result;
+                }
+                case AST_COMPARE_VALUE_FLOAT: {
+                    bool result = variable.float_value < compare_expr.value.float_value;
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }return result;
+                }
+                default: abort();
+            }
+        }
+        case AST_COMPARE_LE: {
+            switch(compare_expr.value.value_type) {
+                case AST_COMPARE_VALUE_INTEGER: {
+                    bool result = variable.integer_value <= compare_expr.value.integer_value;
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }return result;
+                }
+                case AST_COMPARE_VALUE_FLOAT: {
+                    bool result = variable.float_value <= compare_expr.value.float_value;
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }return result;
+                }
+                default: abort();
+            }
+        }
+        case AST_COMPARE_GT: {
+            switch(compare_expr.value.value_type) {
+                case AST_COMPARE_VALUE_INTEGER: {
+                    bool result = variable.integer_value > compare_expr.value.integer_value;
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }return result;
+                }
+                case AST_COMPARE_VALUE_FLOAT: {
+                    bool result = variable.float_value > compare_expr.value.float_value;
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }return result;
+                }
+                default: abort();
+            }
+        }
+        case AST_COMPARE_GE: {
+            switch(compare_expr.value.value_type) {
+                case AST_COMPARE_VALUE_INTEGER: {
+                    bool result = variable.integer_value >= compare_expr.value.integer_value;
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }return result;
+                }
+                case AST_COMPARE_VALUE_FLOAT: {
+                    bool result = variable.float_value >= compare_expr.value.float_value;
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }return result;
+                }
+                default: abort();
+            }
+        }
+        default: abort();
+    }
+}
+
 static bool match_equality_expr(
     const struct betree_variable** preds, const struct ast_equality_expr equality_expr)
 {
@@ -1344,10 +1717,108 @@ static bool match_equality_expr(
     }
 }
 
+static bool match_equality_expr_error_reason(
+    const struct betree_variable** preds, const struct ast_equality_expr equality_expr,
+    hashtable* reason_subid_list, betree_sub_t sub_id)
+{
+    struct value variable;
+    const struct betree_variable* pred = preds[equality_expr.attr_var.var];
+    char* variable_name = pred->attr_var.attr;
+    bool is_variable_defined = get_variable(equality_expr.attr_var.var, preds, &variable);
+    if(is_variable_defined == false) {
+        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+        return false;
+    }
+    switch(equality_expr.op) {
+        case AST_EQUALITY_EQ: {
+            switch(equality_expr.value.value_type) {
+                case AST_EQUALITY_VALUE_INTEGER: {
+                    bool result = variable.integer_value == equality_expr.value.integer_value;
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return result;
+                }
+                case AST_EQUALITY_VALUE_FLOAT: {
+                    bool result = feq(variable.float_value, equality_expr.value.float_value);
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return result;
+                }
+                case AST_EQUALITY_VALUE_STRING: {
+                    bool result = variable.string_value.str == equality_expr.value.string_value.str;
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return result;
+                }
+                case AST_EQUALITY_VALUE_INTEGER_ENUM: {
+                    bool result = variable.integer_enum_value.ienum == equality_expr.value.integer_enum_value.ienum;
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return result;
+                }
+                default: abort();
+            }
+        }
+        case AST_EQUALITY_NE: {
+            switch(equality_expr.value.value_type) {
+                case AST_EQUALITY_VALUE_INTEGER: {
+                    bool result = variable.integer_value != equality_expr.value.integer_value;
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return result;
+                }
+                case AST_EQUALITY_VALUE_FLOAT: {
+                    bool result = fne(variable.float_value, equality_expr.value.float_value);
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return result;
+                }
+                case AST_EQUALITY_VALUE_STRING: {
+                    bool result = variable.string_value.str != equality_expr.value.string_value.str;
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return result;
+                }
+                case AST_EQUALITY_VALUE_INTEGER_ENUM: {
+                    bool result = variable.integer_enum_value.ienum != equality_expr.value.integer_enum_value.ienum;
+                    if(result == false)
+                    {
+                        set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+                    }
+                    return result;
+                }
+                default: abort();
+            }
+        }
+        default: abort();
+    }
+}
+
 static bool match_node_inner(const struct betree_variable** preds,
     const struct ast_node* node,
     struct memoize* memoize,
     struct report* report);
+
+static bool match_node_inner_error_reason(const struct betree_variable** preds,
+    const struct ast_node* node,
+    struct memoize* memoize,
+    struct report* report,
+    hashtable* reason_subid_list,
+    betree_sub_t sub_id);
 
 static bool match_bool_expr(const struct betree_variable** preds,
     const struct ast_bool_expr bool_expr,
@@ -1381,6 +1852,56 @@ static bool match_bool_expr(const struct betree_variable** preds,
             bool value;
             bool is_variable_defined = get_bool_var(bool_expr.variable.var, preds, &value);
             if(is_variable_defined == false) {
+                return false;
+            }
+            return value;
+        }
+        default: abort();
+    }
+}
+
+static bool match_bool_expr_error_reason(const struct betree_variable** preds,
+    const struct ast_bool_expr bool_expr,
+    struct memoize* memoize,
+    struct report* report,
+    hashtable* reason_subid_list,
+    betree_sub_t sub_id)
+{
+    const struct betree_variable* pred = preds[bool_expr.variable.var];
+    char* variable_name = pred->attr_var.attr; //variable이 없는 경우 존재 attr = <optimized out>
+
+    switch(bool_expr.op) {
+        case AST_BOOL_LITERAL:
+            if(bool_expr.literal == false)
+            {
+                //set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+            }
+            return bool_expr.literal;
+        case AST_BOOL_AND: {
+            bool lhs = match_node_inner_error_reason(preds, bool_expr.binary.lhs, memoize, report, reason_subid_list, sub_id);
+            if(lhs == false) {
+                return false;
+            }
+            bool rhs = match_node_inner_error_reason(preds, bool_expr.binary.rhs, memoize, report, reason_subid_list, sub_id);
+            return rhs;
+        }
+        case AST_BOOL_OR: {
+            bool lhs = match_node_inner_error_reason(preds, bool_expr.binary.lhs, memoize, report, reason_subid_list, sub_id);
+            if(lhs == true) {
+                return true;
+            }
+            bool rhs = match_node_inner_error_reason(preds, bool_expr.binary.rhs, memoize, report, reason_subid_list, sub_id);
+            return rhs;
+        }
+        case AST_BOOL_NOT: {
+            bool result = match_node_inner_error_reason(preds, bool_expr.unary.expr, memoize, report, reason_subid_list, sub_id);
+            return !result;
+        }
+        case AST_BOOL_VARIABLE: {
+            bool value;
+            bool is_variable_defined = get_bool_var(bool_expr.variable.var, preds, &value);
+            if(is_variable_defined == false) {
+                //set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
                 return false;
             }
             return value;
@@ -1446,6 +1967,58 @@ static bool match_is_null_expr(const struct betree_variable** preds,
     }
 }
 
+void set_reason_sub_id_list(
+    hashtable* reason_subid_list,
+    betree_sub_t sub_id,
+    const char* variable_name
+)
+{
+    if(variable_name == NULL)
+        variable_name = "NULL";
+    arraylist* sub_id_list = arraylist_create();
+    arraylist_add(sub_id_list, sub_id);
+
+    if(hashtable_get(reason_subid_list, variable_name) == NULL)
+    {
+        hashtable_set(reason_subid_list, variable_name, sub_id_list);
+    }
+    else{
+        arraylist_add(hashtable_get(reason_subid_list, variable_name), sub_id);
+    }
+}
+
+static bool match_is_null_expr_error_reason(const struct betree_variable** preds,
+    const struct ast_is_null_expr is_null_expr,
+    hashtable* reason_subid_list,
+    betree_sub_t sub_id)
+{
+    struct value variable;
+    bool is_variable_defined = get_variable(is_null_expr.attr_var.var, preds, &variable);
+    const struct betree_variable* pred = preds[is_null_expr.attr_var.var];
+    const char* variable_name = pred->attr_var.attr;
+    switch(is_null_expr.type) {
+        case AST_IS_NULL:
+            if(!is_variable_defined == false)
+            {
+                set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+            }
+            return !is_variable_defined;
+        case AST_IS_NOT_NULL:
+            if(is_variable_defined == false)
+            {
+                set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+            }        
+            return is_variable_defined;
+        case AST_IS_EMPTY:
+            if(is_variable_defined && is_empty_list(variable) == false)
+            {
+                set_reason_sub_id_list(reason_subid_list, sub_id, variable_name);
+            }
+            return is_variable_defined && is_empty_list(variable);
+        default: abort();
+    }
+}
+
 static bool match_node_inner(const struct betree_variable** preds,
     const struct ast_node* node,
     struct memoize* memoize,
@@ -1492,6 +2065,69 @@ static bool match_node_inner(const struct betree_variable** preds,
         }
         case AST_TYPE_EQUALITY_EXPR: {
             result = match_equality_expr(preds, node->equality_expr);
+            break;
+        }
+        default: abort();
+    }
+    if(node->memoize_id != INVALID_PRED) {
+        if(result) {
+            set_bit(memoize->pass, node->memoize_id);
+        }
+        else {
+            set_bit(memoize->fail, node->memoize_id);
+        }
+    }
+    return result;
+}
+
+static bool match_node_inner_error_reason(const struct betree_variable** preds,
+    const struct ast_node* node,
+    struct memoize* memoize,
+    struct report* report,
+    hashtable* reason_subid_list,
+    betree_sub_t sub_id)
+{
+    if(node->memoize_id != INVALID_PRED) {
+        if(test_bit(memoize->pass, node->memoize_id)) {
+            if(report != NULL) {
+                report->memoized++;
+            }
+            return true;
+        }
+        if(test_bit(memoize->fail, node->memoize_id)) {
+            if(report != NULL) {
+                report->memoized++;
+            }
+            return false;
+        }
+    }
+    bool result;
+    switch(node->type) {
+        case AST_TYPE_IS_NULL_EXPR:
+            result = match_is_null_expr_error_reason(preds, node->is_null_expr, reason_subid_list, sub_id);
+            break;
+        case AST_TYPE_SPECIAL_EXPR: {
+            result = match_special_expr_error_reason(preds, node->special_expr, reason_subid_list, sub_id);
+            break;
+        }
+        case AST_TYPE_BOOL_EXPR: {
+            result = match_bool_expr_error_reason(preds, node->bool_expr, memoize, report, reason_subid_list, sub_id);
+            break;
+        }
+        case AST_TYPE_LIST_EXPR: {
+            result = match_list_expr_error_reason(preds, node->list_expr, reason_subid_list, sub_id);
+            break;
+        }
+        case AST_TYPE_SET_EXPR: {
+            result = match_set_expr_error_reason(preds, node->set_expr, reason_subid_list, sub_id);
+            break;
+        }
+        case AST_TYPE_COMPARE_EXPR: {
+            result = match_compare_expr_error_reason(preds, node->compare_expr, reason_subid_list, sub_id);
+            break;
+        }
+        case AST_TYPE_EQUALITY_EXPR: {
+            result = match_equality_expr_error_reason(preds, node->equality_expr, reason_subid_list, sub_id);
             break;
         }
         default: abort();
@@ -1578,6 +2214,16 @@ bool match_node(const struct betree_variable** preds,
     struct report* report)
 {
     return match_node_inner(preds, node, memoize, report);
+}
+
+bool match_node_error_reason(const struct betree_variable** preds,
+    const struct ast_node* node,
+    struct memoize* memoize,
+    struct report* report,
+    hashtable* reason_subid_list,
+    betree_sub_t sub_id)
+{
+    return match_node_inner_error_reason(preds, node, memoize, report, reason_subid_list, sub_id);
 }
 
 struct bound_dirty {
