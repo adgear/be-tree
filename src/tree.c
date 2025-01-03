@@ -27,6 +27,21 @@ static void search_cdir_ids(const struct attr_domain** attr_domains,
 
 static bool is_id_in(uint64_t id, const uint64_t* ids, size_t sz);
 
+void add_reason_sub_id_list(
+    struct report_error_reason* report,
+    const char* variable_name,
+    betree_sub_t sub_id
+)
+{
+    if(variable_name == NULL)
+        variable_name = "NULL";    
+    if(hashtable_get(report->reason_sub_id_list, variable_name) == NULL)
+    {
+        arraylist* sub_id_list = arraylist_create();
+        hashtable_set(report->reason_sub_id_list, variable_name, sub_id_list);
+    }    
+    arraylist_add(hashtable_get(report->reason_sub_id_list, variable_name), sub_id);
+}
 
 void init_subs_to_eval(struct subs_to_eval* subs)
 {
@@ -99,10 +114,10 @@ bool match_sub(size_t attr_domains_count,
 bool match_sub_error_reason(size_t attr_domains_count,
     const struct betree_variable** preds,
     const struct betree_sub* sub,
-    struct report* report,
+    struct report_error_reason* report,
     struct memoize* memoize,
     const uint64_t* undefined,
-    hashtable* reason_subid_list)
+    char* last_reason)
 {
     enum short_circuit_e short_circuit = try_short_circuit(attr_domains_count, &sub->short_circuit, undefined);
     if(short_circuit != SHORT_CIRCUIT_NONE) {
@@ -116,7 +131,7 @@ bool match_sub_error_reason(size_t attr_domains_count,
             return false;
         }
     }
-    bool result = match_node_error_reason(preds, sub->expr, memoize, report, reason_subid_list, sub->id);
+    bool result = match_node_error_reason(preds, sub->expr, memoize, report, last_reason);
     return result;
 }
 
@@ -1924,6 +1939,28 @@ void add_sub(betree_sub_t id, struct report* report)
     report->matched++;
 }
 
+void add_sub_error_reason(betree_sub_t id, struct report_error_reason* report)
+{
+    if(report->matched == 0) {
+        report->subs = bcalloc(sizeof(*report->subs));
+        if(report->subs == NULL) {
+            fprintf(stderr, "%s bcalloc failed", __func__);
+            abort();
+        }
+    }
+    else {
+        betree_sub_t* subs
+            = brealloc(report->subs, sizeof(*report->subs) * (report->matched + 1));
+        if(subs == NULL) {
+            fprintf(stderr, "%s brealloc failed", __func__);
+            abort();
+        }
+        report->subs = subs;
+    }
+    report->subs[report->matched] = id;
+    report->matched++;
+}
+
 void add_sub_counting(betree_sub_t id, struct report_counting* report)
 {
     if(report->matched == 0) {
@@ -1973,8 +2010,8 @@ bool betree_search_with_preds(const struct config* config,
 bool betree_search_with_preds_error_reason(const struct config* config,
     const struct betree_variable** preds,
     const struct cnode* cnode,
-    struct report* report,
-    hashtable* reason_subid_list)
+    struct report_error_reason* report
+    )
 {
     uint64_t* undefined = make_undefined(config->attr_domain_count, preds);
     struct memoize memoize = make_memoize(config->pred_map->memoize_count);
@@ -1984,8 +2021,12 @@ bool betree_search_with_preds_error_reason(const struct config* config,
     for(size_t i = 0; i < subs.count; i++) {
         const struct betree_sub* sub = subs.subs[i];
         report->evaluated++;
-        if(match_sub_error_reason(config->attr_domain_count, preds, sub, report, &memoize, undefined, reason_subid_list) == true) {
-            add_sub(sub->id, report);
+        char last_reason[512];
+        if(match_sub_error_reason(config->attr_domain_count, preds, sub, report, &memoize, undefined, last_reason) == true) {
+            add_sub_error_reason(sub->id, report);
+        }
+        else{
+            add_reason_sub_id_list(report, last_reason, sub->id);
         }
     }
     bfree(subs.subs);

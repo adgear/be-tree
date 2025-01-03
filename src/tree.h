@@ -161,8 +161,8 @@ bool betree_search_with_preds(const struct config* config,
 bool betree_search_with_preds_error_reason(const struct config* config,
     const struct betree_variable** preds,
     const struct cnode* cnode,
-    struct report* report,
-    hashtable* reason_subid_list);
+    struct report_error_reason* report
+    );
 
 bool betree_search_with_preds_ids(const struct config* config,
     const struct betree_variable** preds,
