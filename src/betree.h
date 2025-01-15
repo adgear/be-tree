@@ -24,15 +24,6 @@ struct report {
     betree_sub_t* subs;
 };
 
-struct report_error_reason {
-    size_t evaluated;
-    size_t matched;
-    size_t memoized;
-    size_t shorted;
-    betree_sub_t* subs;
-    hashtable* reason_sub_id_list;
-};
-
 struct report_counting {
     size_t evaluated;
     size_t matched;
@@ -142,7 +133,6 @@ bool betree_insert(struct betree* tree, betree_sub_t id, const char* expr);
 bool betree_insert_with_constants(struct betree* tree, betree_sub_t id, size_t constant_count, const struct betree_constant** constants, const char* expr);
 
 bool betree_search(const struct betree* tree, const char* event_str, struct report* report);
-bool betree_search_with_error_reason(const struct betree* tree, const char* event_str, struct report_error_reason* report);
 bool betree_search_ids(const struct betree* tree, const char* event_str, struct report* report, const uint64_t* ids, size_t sz);
 bool betree_search_with_event(const struct betree* betree, struct betree_event* event, struct report* report);
 bool betree_search_with_event_ids(const struct betree* betree, struct betree_event* event, struct report* report, const uint64_t* ids, size_t sz);
@@ -153,10 +143,8 @@ bool betree_exists_with_event(const struct betree* betree, struct betree_event* 
 //bool betree_delete(struct betree* betree, betree_sub_t id);
 
 struct report* make_report();
-struct report_error_reason* make_report_error_reason();
 
 void free_report(struct report* report);
-void free_report_error_reason(struct report_error_reason* report);
 
 struct report_counting* make_report_counting();
 void free_report_counting(struct report_counting* report);

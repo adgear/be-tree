@@ -324,12 +324,6 @@ bool match_node(const struct betree_variable** preds,
     struct memoize* memoize,
     struct report* report);
 
-bool match_node_error_reason(const struct betree_variable** preds,
-    const struct ast_node* node,
-    struct memoize* memoize,
-    struct report_error_reason* report,
-    char* last_reason);
-
 bool match_node_counting(const struct betree_variable** preds,
     const struct ast_node* node,
     struct memoize* memoize,
@@ -353,5 +347,3 @@ bool fast_eq_expr(const struct ast_node* a, const struct ast_node* b);
 bool all_variables_in_config(const struct config* config, const struct ast_node* node);
 bool all_bounded_strings_valid(const struct config* config, const struct ast_node* node);
 bool all_exprs_valid(const struct config* config, const struct ast_node* node);
-
-void set_reason_sub_id_list(char* last_reason, const char* variable_name);

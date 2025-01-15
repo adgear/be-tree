@@ -27,22 +27,6 @@ static void search_cdir_ids(const struct attr_domain** attr_domains,
 
 static bool is_id_in(uint64_t id, const uint64_t* ids, size_t sz);
 
-void add_reason_sub_id_list(
-    struct report_error_reason* report,
-    const char* variable_name,
-    betree_sub_t sub_id
-)
-{
-    if(variable_name == NULL)
-        variable_name = "NULL";    
-    if(hashtable_get(report->reason_sub_id_list, variable_name) == NULL)
-    {
-        arraylist* sub_id_list = arraylist_create();
-        hashtable_set(report->reason_sub_id_list, variable_name, sub_id_list);
-    }    
-    arraylist_add(hashtable_get(report->reason_sub_id_list, variable_name), sub_id);
-}
-
 void init_subs_to_eval(struct subs_to_eval* subs)
 {
     size_t init = 10;
@@ -108,30 +92,6 @@ bool match_sub(size_t attr_domains_count,
         }
     }
     bool result = match_node(preds, sub->expr, memoize, report);
-    return result;
-}
-
-bool match_sub_error_reason(size_t attr_domains_count,
-    const struct betree_variable** preds,
-    const struct betree_sub* sub,
-    struct report_error_reason* report,
-    struct memoize* memoize,
-    const uint64_t* undefined,
-    char* last_reason)
-{
-    enum short_circuit_e short_circuit = try_short_circuit(attr_domains_count, &sub->short_circuit, undefined);
-    if(short_circuit != SHORT_CIRCUIT_NONE) {
-        if(report != NULL) {
-            report->shorted++;
-        }
-        if(short_circuit == SHORT_CIRCUIT_PASS) {
-            return true;
-        }
-        if(short_circuit == SHORT_CIRCUIT_FAIL) {
-            return false;
-        }
-    }
-    bool result = match_node_error_reason(preds, sub->expr, memoize, report, last_reason);
     return result;
 }
 
@@ -233,7 +193,6 @@ void match_be_tree(const struct attr_domain** attr_domains,
         }
     }
 }
-
 
 static void match_be_tree_ids(const struct attr_domain** attr_domains,
     const struct betree_variable** preds,
@@ -1939,28 +1898,6 @@ void add_sub(betree_sub_t id, struct report* report)
     report->matched++;
 }
 
-void add_sub_error_reason(betree_sub_t id, struct report_error_reason* report)
-{
-    if(report->matched == 0) {
-        report->subs = bcalloc(sizeof(*report->subs));
-        if(report->subs == NULL) {
-            fprintf(stderr, "%s bcalloc failed", __func__);
-            abort();
-        }
-    }
-    else {
-        betree_sub_t* subs
-            = brealloc(report->subs, sizeof(*report->subs) * (report->matched + 1));
-        if(subs == NULL) {
-            fprintf(stderr, "%s brealloc failed", __func__);
-            abort();
-        }
-        report->subs = subs;
-    }
-    report->subs[report->matched] = id;
-    report->matched++;
-}
-
 void add_sub_counting(betree_sub_t id, struct report_counting* report)
 {
     if(report->matched == 0) {
@@ -2006,36 +1943,6 @@ bool betree_search_with_preds(const struct config* config,
     bfree(preds);
     return true;
 }
-
-bool betree_search_with_preds_error_reason(const struct config* config,
-    const struct betree_variable** preds,
-    const struct cnode* cnode,
-    struct report_error_reason* report
-    )
-{
-    uint64_t* undefined = make_undefined(config->attr_domain_count, preds);
-    struct memoize memoize = make_memoize(config->pred_map->memoize_count);
-    struct subs_to_eval subs;
-    init_subs_to_eval(&subs);
-    match_be_tree((const struct attr_domain**)config->attr_domains, preds, cnode, &subs);
-    for(size_t i = 0; i < subs.count; i++) {
-        const struct betree_sub* sub = subs.subs[i];
-        report->evaluated++;
-        char last_reason[512];
-        if(match_sub_error_reason(config->attr_domain_count, preds, sub, report, &memoize, undefined, last_reason) == true) {
-            add_sub_error_reason(sub->id, report);
-        }
-        else{
-            add_reason_sub_id_list(report, last_reason, sub->id);
-        }
-    }
-    bfree(subs.subs);
-    free_memoize(memoize);
-    bfree(undefined);
-    bfree(preds);
-    return true;
-}
-
 
 static bool is_id_in(uint64_t id, const uint64_t* ids, size_t sz) {
     if (sz == 0) {

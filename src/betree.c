@@ -556,18 +556,6 @@ const struct betree_variable** make_environment(size_t attr_domain_count, const 
     return preds;
 }
 
-static bool betree_search_with_event_filled_error_reason(
-    const struct betree* betree, struct betree_event* event, struct report_error_reason* report)
-{
-    const struct betree_variable** variables
-        = make_environment(betree->config->attr_domain_count, event);
-    if(validate_variables(betree->config, variables) == false) {
-        fprintf(stderr, "Failed to validate event\n");
-        return false;
-    }
-    return betree_search_with_preds_error_reason(betree->config, variables, betree->cnode, report);
-}
-
 static bool betree_search_with_event_filled(const struct betree* betree, struct betree_event* event, struct report* report)
 {
     const struct betree_variable** variables
@@ -620,13 +608,6 @@ bool betree_search(const struct betree* tree, const char* event_str, struct repo
     return result;
 }
 
-bool betree_search_with_error_reason(const struct betree* tree, const char* event_str, struct report_error_reason* report)
-{
-    struct betree_event* event = make_event_from_string(tree, event_str);
-    bool result = betree_search_with_event_filled_error_reason(tree, event, report);
-    free_event(event);
-    return result;
-}
 
 bool betree_search_ids(const struct betree* tree, const char* event_str, struct report* report, const uint64_t* ids, size_t sz)
 {
@@ -665,32 +646,8 @@ struct report* make_report()
     return report;
 }
 
-struct report_error_reason* make_report_error_reason()
-{
-    struct report_error_reason* report = bcalloc(sizeof(*report));
-    if(report == NULL) {
-        fprintf(stderr, "%s bcalloc failed\n", __func__);
-        abort();
-    }
-    report->evaluated = 0;
-    report->matched = 0;
-    report->memoized = 0;
-    report->shorted = 0;
-    report->subs = NULL;
-    report->reason_sub_id_list = hashtable_create();
-    return report;
-}
-
-
 void free_report(struct report* report)
 {
-    bfree(report->subs);
-    bfree(report);
-}
-
-void free_report_error_reason(struct report_error_reason* report)
-{
-    bfree(report->reason_sub_id_list);
     bfree(report->subs);
     bfree(report);
 }

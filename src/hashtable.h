@@ -1,4 +1,6 @@
 /* This file was automatically generated.  Do not edit! */
+#pragma once
+
 typedef struct hashtable hashtable;
 void hashtable_destroy(hashtable *t);
 typedef struct hashtable_entry hashtable_entry;

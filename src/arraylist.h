@@ -1,4 +1,6 @@
 /* This file was automatically generated.  Do not edit! */
+#pragma once
+
 typedef struct arraylist arraylist;
 void arraylist_destroy(arraylist *l);
 void arraylist_splice(arraylist *l,arraylist *source,unsigned int index);
