@@ -5,13 +5,13 @@
 #include <string.h>
 
 #include "alloc.h"
-#include "betree.h"
+#include "betree_err.h"
 #include "debug.h"
 #include "helper.h"
 #include "minunit.h"
 #include "printer.h"
 #include "special.h"
-#include "tree.h"
+#include "tree_err.h"
 #include "utils.h"
 
 #define DEBUG 1
@@ -48,10 +48,10 @@ enum ATTR_DOMAIN_POSITION {
         | (1 << z) | (1 << q))
 
 
-void make_attr_domains(struct betree* tree, size_t config);
-void make_attr_domains_undefined(struct betree* tree, size_t config, size_t config_undefined);
-void betree_bulk_insert(struct betree* tree, const char** exprs, int count);
-void betree_bulk_insert_with_constants(struct betree* tree,
+void make_attr_domains(struct betree_err* tree, size_t config);
+void make_attr_domains_undefined(struct betree_err* tree, size_t config, size_t config_undefined);
+void betree_bulk_insert(struct betree_err* tree, const char** exprs, int count);
+void betree_bulk_insert_with_constants(struct betree_err* tree,
     const char** exprs,
     int exprs_count,
     struct betree_constant** constants,
@@ -59,7 +59,7 @@ void betree_bulk_insert_with_constants(struct betree* tree,
 
 int test_bool_fail()
 {
-    struct betree* tree = betree_make();
+    struct betree_err* tree = betree_make_err();
 
     make_attr_domains(tree, ATTR_CONFIG_2(ATTR_BOOL, ATTR_INT));
 
@@ -68,18 +68,18 @@ int test_bool_fail()
     betree_bulk_insert(tree, exprs, exprs_count);
 
     const char* event = "{\"b\": false, \"i\": 1}";
-    struct report* report = make_report();
+    struct report_err* report = make_report_err();
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     /* TODO: change function & asserts to check fail reasons */
-    betree_search(tree, event, report);
+    betree_search_err(tree, event, report);
     mu_assert(report->matched == 0, "goodEvent");
 
-    // write_dot_to_file(tree, "tests/beetree_search_reason_tests.dot");
+    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
-    free_report(report);
-    betree_free(tree);
+    free_report_err(report);
+    betree_free_err(tree);
 #if defined(DEBUG)
     fprintf(stderr, "\n");
 #endif
@@ -89,7 +89,7 @@ int test_bool_fail()
 
 int test_int_fail()
 {
-    struct betree* tree = betree_make();
+    struct betree_err* tree = betree_make_err();
 
     make_attr_domains(tree, ATTR_CONFIG_2(ATTR_BOOL, ATTR_INT));
 
@@ -98,18 +98,18 @@ int test_int_fail()
     betree_bulk_insert(tree, exprs, exprs_count);
 
     const char* event = "{\"b\": true, \"i\": 2}";
-    struct report* report = make_report();
+    struct report_err* report = make_report_err();
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     /* TODO: change function & asserts to check fail reasons */
-    betree_search(tree, event, report);
+    betree_search_err(tree, event, report);
     mu_assert(report->matched == 0, "goodEvent");
 
-    // write_dot_to_file(tree, "tests/beetree_search_reason_tests.dot");
+    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
-    free_report(report);
-    betree_free(tree);
+    free_report_err(report);
+    betree_free_err(tree);
 #if defined(DEBUG)
     fprintf(stderr, "\n");
 #endif
@@ -119,7 +119,7 @@ int test_int_fail()
 
 int test_float_fail()
 {
-    struct betree* tree = betree_make();
+    struct betree_err* tree = betree_make_err();
 
     make_attr_domains(tree, ATTR_CONFIG_2(ATTR_BOOL, ATTR_FLOAT));
 
@@ -128,18 +128,18 @@ int test_float_fail()
     betree_bulk_insert(tree, exprs, exprs_count);
 
     const char* event = "{\"b\": true, \"f\": 0.2}";
-    struct report* report = make_report();
+    struct report_err* report = make_report_err();
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     /* TODO: change function & asserts to check fail reasons */
-    betree_search(tree, event, report);
+    betree_search_err(tree, event, report);
     mu_assert(report->matched == 0, "goodEvent");
 
-    // write_dot_to_file(tree, "tests/beetree_search_reason_tests.dot");
+    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
-    free_report(report);
-    betree_free(tree);
+    free_report_err(report);
+    betree_free_err(tree);
 #if defined(DEBUG)
     fprintf(stderr, "\n");
 #endif
@@ -149,7 +149,7 @@ int test_float_fail()
 
 int test_bin_fail()
 {
-    struct betree* tree = betree_make();
+    struct betree_err* tree = betree_make_err();
 
     make_attr_domains(tree, ATTR_CONFIG_2(ATTR_BOOL, ATTR_STR));
 
@@ -158,18 +158,18 @@ int test_bin_fail()
     betree_bulk_insert(tree, exprs, exprs_count);
 
     const char* event = "{\"b\": true, \"s\": \"betree\"}";
-    struct report* report = make_report();
+    struct report_err* report = make_report_err();
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     /* TODO: change function & asserts to check fail reasons */
-    betree_search(tree, event, report);
+    betree_search_err(tree, event, report);
     mu_assert(report->matched == 0, "goodEvent");
 
-    // write_dot_to_file(tree, "tests/beetree_search_reason_tests.dot");
+    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
-    free_report(report);
-    betree_free(tree);
+    free_report_err(report);
+    betree_free_err(tree);
 #if defined(DEBUG)
     fprintf(stderr, "\n");
 #endif
@@ -179,7 +179,7 @@ int test_bin_fail()
 
 int test_int_list_fail()
 {
-    struct betree* tree = betree_make();
+    struct betree_err* tree = betree_make_err();
 
     make_attr_domains(tree, ATTR_CONFIG_2(ATTR_BOOL, ATTR_INT_LIST));
 
@@ -188,18 +188,18 @@ int test_int_list_fail()
     betree_bulk_insert(tree, exprs, exprs_count);
 
     const char* event = "{\"b\": true, \"il\": [3]}";
-    struct report* report = make_report();
+    struct report_err* report = make_report_err();
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     /* TODO: change function & asserts to check fail reasons */
-    betree_search(tree, event, report);
+    betree_search_err(tree, event, report);
     mu_assert(report->matched == 0, "goodEvent");
 
-    // write_dot_to_file(tree, "tests/beetree_search_reason_tests.dot");
+    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
-    free_report(report);
-    betree_free(tree);
+    free_report_err(report);
+    betree_free_err(tree);
 #if defined(DEBUG)
     fprintf(stderr, "\n");
 #endif
@@ -209,7 +209,7 @@ int test_int_list_fail()
 
 int test_bin_list_fail()
 {
-    struct betree* tree = betree_make();
+    struct betree_err* tree = betree_make_err();
 
     make_attr_domains(tree, ATTR_CONFIG_2(ATTR_BOOL, ATTR_STR_LIST));
 
@@ -218,18 +218,18 @@ int test_bin_list_fail()
     betree_bulk_insert(tree, exprs, exprs_count);
 
     const char* event = "{\"b\": true, \"sl\": [\"how\"]}";
-    struct report* report = make_report();
+    struct report_err* report = make_report_err();
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     /* TODO: change function & asserts to check fail reasons */
-    betree_search(tree, event, report);
+    betree_search_err(tree, event, report);
     mu_assert(report->matched == 0, "goodEvent");
 
-    // write_dot_to_file(tree, "tests/beetree_search_reason_tests.dot");
+    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
-    free_report(report);
-    betree_free(tree);
+    free_report_err(report);
+    betree_free_err(tree);
 #if defined(DEBUG)
     fprintf(stderr, "\n");
 #endif
@@ -239,7 +239,7 @@ int test_bin_list_fail()
 
 int test_segments_fail()
 {
-    struct betree* tree = betree_make();
+    struct betree_err* tree = betree_make_err();
 
     make_attr_domains(tree, ATTR_CONFIG_2(ATTR_INT64, ATTR_SEGMENTS));
 
@@ -249,18 +249,18 @@ int test_segments_fail()
 
     const char* event
         = "{\"now\": 30, \"seg\": [[1, 10000000]], \"segments_with_timestamp\": [[1, 10000000]]}";
-    struct report* report = make_report();
+    struct report_err* report = make_report_err();
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     /* TODO: change function & asserts to check fail reasons */
-    betree_search(tree, event, report);
+    betree_search_err(tree, event, report);
     mu_assert(report->matched == 0, "goodEvent");
 
-    // write_dot_to_file(tree, "tests/beetree_search_reason_tests.dot");
+    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
-    free_report(report);
-    betree_free(tree);
+    free_report_err(report);
+    betree_free_err(tree);
 #if defined(DEBUG)
     fprintf(stderr, "\n");
 #endif
@@ -270,7 +270,7 @@ int test_segments_fail()
 
 int test_frequency_cap_fail()
 {
-    struct betree* tree = betree_make();
+    struct betree_err* tree = betree_make_err();
 
     const int constant_count = 1;
     const struct betree_constant* constants[]
@@ -284,18 +284,18 @@ int test_frequency_cap_fail()
 
     const char* event
         = "{\"now\": 30, \"frequency_caps\": [[\"campaign\", 30, \"namespace\", 20, 10]]}";
-    struct report* report = make_report();
+    struct report_err* report = make_report_err();
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     /* TODO: change function & asserts to check fail reasons */
-    betree_search(tree, event, report);
+    betree_search_err(tree, event, report);
     mu_assert(report->matched == 0, "goodEvent");
 
-    // write_dot_to_file(tree, "tests/beetree_search_reason_tests.dot");
+    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
-    free_report(report);
-    betree_free(tree);
+    free_report_err(report);
+    betree_free_err(tree);
 #if defined(DEBUG)
     fprintf(stderr, "\n");
 #endif
@@ -305,7 +305,7 @@ int test_frequency_cap_fail()
 
 int test_geo_fail()
 {
-    struct betree* tree = betree_make();
+    struct betree_err* tree = betree_make_err();
 
     make_attr_domains(tree, ATTR_CONFIG_2(ATTR_BOOL, ATTR_GEO));
 
@@ -314,18 +314,18 @@ int test_geo_fail()
     betree_bulk_insert(tree, exprs, exprs_count);
 
     const char* event = "{\"b\": true, \"latitude\": 101.0, \"longitude\": 99.0}";
-    struct report* report = make_report();
+    struct report_err* report = make_report_err();
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     /* TODO: change function & asserts to check fail reasons */
-    betree_search(tree, event, report);
+    betree_search_err(tree, event, report);
     mu_assert(report->matched == 0, "goodEvent");
 
-    // write_dot_to_file(tree, "tests/beetree_search_reason_tests.dot");
+    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
-    free_report(report);
-    betree_free(tree);
+    free_report_err(report);
+    betree_free_err(tree);
 #if defined(DEBUG)
     fprintf(stderr, "\n");
 #endif
@@ -335,7 +335,7 @@ int test_geo_fail()
 
 int test_int64_fail()
 {
-    struct betree* tree = betree_make();
+    struct betree_err* tree = betree_make_err();
 
     make_attr_domains(tree, ATTR_CONFIG_2(ATTR_BOOL, ATTR_INT64));
 
@@ -344,18 +344,18 @@ int test_int64_fail()
     betree_bulk_insert(tree, exprs, exprs_count);
 
     const char* event = "{\"b\": true, \"now\": 2}";
-    struct report* report = make_report();
+    struct report_err* report = make_report_err();
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     /* TODO: change function & asserts to check fail reasons */
-    betree_search(tree, event, report);
+    betree_search_err(tree, event, report);
     mu_assert(report->matched == 0, "goodEvent");
 
-    // write_dot_to_file(tree, "tests/beetree_search_reason_tests.dot");
+    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
-    free_report(report);
-    betree_free(tree);
+    free_report_err(report);
+    betree_free_err(tree);
 #if defined(DEBUG)
     fprintf(stderr, "\n");
 #endif
@@ -365,7 +365,7 @@ int test_int64_fail()
 
 int test_short_circuit_fail()
 {
-    struct betree* tree = betree_make();
+    struct betree_err* tree = betree_make_err();
 
     make_attr_domains_undefined(tree,
         ATTR_CONFIG_5(ATTR_BOOL, ATTR_INT, ATTR_FLOAT, ATTR_STR, ATTR_INT_LIST),
@@ -378,18 +378,18 @@ int test_short_circuit_fail()
     betree_bulk_insert(tree, exprs, exprs_count);
 
     const char* event = "{\"b\": true, \"i\": 0}";
-    struct report* report = make_report();
+    struct report_err* report = make_report_err();
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     /* TODO: change function & asserts to check fail reasons */
-    betree_search(tree, event, report);
+    betree_search_err(tree, event, report);
     mu_assert(report->matched == 0, "goodEvent");
 
-    // write_dot_to_file(tree, "tests/beetree_search_reason_tests_short_circuit.dot");
+    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests_short_circuit.dot");
 
-    free_report(report);
-    betree_free(tree);
+    free_report_err(report);
+    betree_free_err(tree);
 #if defined(DEBUG)
     fprintf(stderr, "\n");
 #endif
@@ -399,7 +399,7 @@ int test_short_circuit_fail()
 
 int test_multiple_bool_exprs_fail()
 {
-    struct betree* tree = betree_make();
+    struct betree_err* tree = betree_make_err();
 
     make_attr_domains(tree, ATTR_CONFIG_4(ATTR_BOOL, ATTR_INT, ATTR_FLOAT, ATTR_STR));
 
@@ -414,17 +414,17 @@ int test_multiple_bool_exprs_fail()
     betree_bulk_insert(tree, exprs, exprs_count);
 
     const char* event = "{\"b\": false, \"i\": 2, \"f\": 0.2, \"s\": \"s3\"}";
-    struct report* report = make_report();
+    struct report_err* report = make_report_err();
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
-    betree_search(tree, event, report);
+    betree_search_err(tree, event, report);
     mu_assert(report->matched == 0, "goodEvent");
 
-    write_dot_to_file(tree, "tests/beetree_search_reason_tests_multipl_bool_exprs.dot");
+    write_dot_to_file_err(tree, "tests/beetree_search_reason_tests_multipl_bool_exprs.dot");
 
-    free_report(report);
-    betree_free(tree);
+    free_report_err(report);
+    betree_free_err(tree);
 #if defined(DEBUG)
     fprintf(stderr, "\n");
 #endif
@@ -434,7 +434,7 @@ int test_multiple_bool_exprs_fail()
 
 int test_memoize_fail()
 {
-    struct betree* tree = betree_make();
+    struct betree_err* tree = betree_make_err();
 
     make_attr_domains(tree, ATTR_CONFIG_4(ATTR_BOOL, ATTR_INT, ATTR_FLOAT, ATTR_STR));
 
@@ -449,17 +449,17 @@ int test_memoize_fail()
     betree_bulk_insert(tree, exprs, exprs_count);
 
     const char* event = "{\"b\": false, \"i\": 3, \"f\": 0.0, \"s\": \"s12\"}";
-    struct report* report = make_report();
+    struct report_err* report = make_report_err();
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
-    betree_search(tree, event, report);
+    betree_search_err(tree, event, report);
     mu_assert(report->matched == 0, "goodEvent");
 
-    write_dot_to_file(tree, "tests/beetree_search_reason_tests_multipl_bool_exprs.dot");
+    write_dot_to_file_err(tree, "tests/beetree_search_reason_tests_multipl_bool_exprs.dot");
 
-    free_report(report);
-    betree_free(tree);
+    free_report_err(report);
+    betree_free_err(tree);
 #if defined(DEBUG)
     fprintf(stderr, "\n");
 #endif
@@ -467,13 +467,13 @@ int test_memoize_fail()
 }
 
 
-void make_attr_domains(struct betree* tree, size_t config)
+void make_attr_domains(struct betree_err* tree, size_t config)
 {
     make_attr_domains_undefined(tree, config, 0);
 }
 
 
-void make_attr_domains_undefined(struct betree* tree, size_t config, size_t config_undefined)
+void make_attr_domains_undefined(struct betree_err* tree, size_t config, size_t config_undefined)
 {
     if((1 << ATTR_BOOL) & config)
         add_attr_domain_b(tree->config, "b", ((1 << ATTR_BOOL) & config_undefined));
@@ -504,7 +504,7 @@ void make_attr_domains_undefined(struct betree* tree, size_t config, size_t conf
 }
 
 
-void betree_bulk_insert(struct betree* tree, const char** exprs, int count)
+void betree_bulk_insert(struct betree_err* tree, const char** exprs, int count)
 {
     for(size_t i = 0; i < count; i++) {
         int idx = i + 1;
@@ -516,7 +516,7 @@ void betree_bulk_insert(struct betree* tree, const char** exprs, int count)
 }
 
 
-void betree_bulk_insert_with_constants(struct betree* tree,
+void betree_bulk_insert_with_constants(struct betree_err* tree,
     const char** exprs,
     int exprs_count,
     struct betree_constant** constants,
