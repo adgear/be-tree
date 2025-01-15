@@ -756,7 +756,7 @@ static bool match_node_inner_err(const struct betree_variable** preds,
 {
     if(node->memoize_id != INVALID_PRED) {
         char memoize_id_c[22];
-        sprintf(memoize_id_c, "%d", node->memoize_id);
+        sprintf(memoize_id_c, "%ld", node->memoize_id);
         if(test_bit(memoize->pass, node->memoize_id)) {
             if(report != NULL) {
                 report->memoized++;
@@ -805,7 +805,7 @@ static bool match_node_inner_err(const struct betree_variable** preds,
     }
     if(node->memoize_id != INVALID_PRED) {
         char memoize_id_c[22];
-        sprintf(memoize_id_c, "%d", node->memoize_id);
+        sprintf(memoize_id_c, "%ld", node->memoize_id);
         if(result) {
             set_bit(memoize->pass, node->memoize_id);
             hashtable_set(memoize_table, memoize_id_c, last_reason);

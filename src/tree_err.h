@@ -107,3 +107,6 @@ bool betree_search_with_preds_ids_err(const struct config* config,
     );
 
 bool insert_be_tree_err(const struct config* config, const struct betree_sub* sub, struct cnode_err* cnode, struct cdir_err* cdir);
+
+void build_sub_ids_cdir(struct cdir_err* cd);
+void build_sub_ids_cnode(struct cnode_err* cn);

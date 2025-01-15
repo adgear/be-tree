@@ -535,6 +535,12 @@ bool betree_search_with_event_filled_ids_err(const struct betree_err* betree, st
     return betree_search_with_preds_ids_err(betree->config, variables, betree->cnode, report, ids, sz);
 }
 
+bool betree_make_sub_ids(struct betree_err* tree)
+{
+    build_sub_ids_cnode(tree->cnode);
+    return true;
+}
+
 bool betree_search_err(const struct betree_err* tree, const char* event_str, struct report_err* report)
 {
     struct betree_event* event = make_event_from_string(tree, event_str);
@@ -628,6 +634,7 @@ void betree_deinit_err(struct betree_err* betree)
 {
     free_cnode_err(betree->cnode);
     free_config(betree->config);
+    if(betree->sub_ids) arraylist_destroy(betree->sub_ids);
 }
 
 void betree_free_err(struct betree_err* betree)

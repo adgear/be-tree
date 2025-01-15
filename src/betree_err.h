@@ -32,6 +32,8 @@ void betree_init_err(struct betree_err* betree);
 struct betree_err* betree_make_err();
 struct betree_err* betree_make_with_parameters_err(uint64_t lnode_max_cap, uint64_t min_partition_size);
 
+bool betree_make_sub_ids(struct betree_err* tree);
+
 void betree_add_boolean_variable_err(struct betree_err* betree, const char* name, bool allow_undefined);
 void betree_add_integer_variable_err(struct betree_err* betree, const char* name, bool allow_undefined, int64_t min, int64_t max);
 void betree_add_float_variable_err(struct betree_err* betree, const char* name, bool allow_undefined, double min, double max);

@@ -760,6 +760,7 @@ static struct cdir_err* create_cdir_err(const struct config* config,
     cdir->cnode = make_cnode(config, cdir);
     cdir->lchild = NULL;
     cdir->rchild = NULL;
+    cdir->sub_ids = arraylist_create();
     return cdir;
 }
 
@@ -1021,7 +1022,7 @@ static void space_partitioning_err(const struct config* config, struct cnode_err
         for(size_t i = 0; i < lnode->sub_count; i++) {
             const struct betree_sub* sub = lnode->subs[i];
             if(sub_has_attribute(sub, var)) {
-                struct cdir* cdir = insert_cdir_err(config, sub, pnode->cdir);
+                struct cdir_err* cdir = insert_cdir_err(config, sub, pnode->cdir);
                 move_err(sub, lnode, cdir->cnode->lnode);
                 i--;
             }
@@ -1291,6 +1292,7 @@ static void free_cdir_err(struct cdir_err* cdir)
         return;
     }
     bfree((char*)cdir->attr_var.attr);
+    if(cdir->sub_ids) arraylist_destroy(cdir->sub_ids);
     free_cnode_err(cdir->cnode);
     cdir->cnode = NULL;
     free_cdir_err(cdir->lchild);
@@ -1605,4 +1607,38 @@ struct betree_event* make_event_from_string_err(const struct betree_err* betree,
     fill_event(betree->config, event);
     sort_event_lists(event);
     return event;
+}
+
+void build_sub_ids_cdir(struct cdir_err* cd)
+{
+    if(cd->lchild) build_sub_ids_cdir(cd->lchild);
+    if(cd->rchild) build_sub_ids_cdir(cd->rchild);
+    if(cd->cnode) build_sub_ids_cnode(cd->cnode);
+    if(cd->lchild && cd->lchild->sub_ids->size > 0)
+        arraylist_join(cd->sub_ids, cd->lchild->sub_ids);
+    if(cd->rchild && cd->rchild->sub_ids->size > 0)
+        arraylist_join(cd->sub_ids, cd->rchild->sub_ids);
+}
+
+void build_sub_ids_cnode(struct cnode_err* cn)
+{
+    if(!cn) return;
+    if(cn->lnode) {
+        for(size_t i = 0; i < cn->lnode->sub_count; i++) {
+            if(cn->parent) {
+                arraylist_add(cn->parent->sub_ids, cn->lnode->subs[i]->id);
+            }
+        }
+    }
+    if(cn->pdir) {
+        int pnode_count = cn->pdir->pnode_count;
+        for(size_t i = 0; i < pnode_count; i++) {
+            struct pnode_err* pn = cn->pdir->pnodes[i];
+            if(!pn) continue;
+            struct cdir_err* cd = pn->cdir;
+            if(cd) build_sub_ids_cdir(cd);
+            if(cn->parent && cd->sub_ids->size > 0)
+                arraylist_join(cn->parent->sub_ids, cd->sub_ids);
+        }
+    }
 }

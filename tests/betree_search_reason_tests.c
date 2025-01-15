@@ -67,6 +67,7 @@ int test_bool_fail()
     const size_t exprs_count = 1;
     betree_bulk_insert(tree, exprs, exprs_count);
 
+    betree_make_sub_ids(tree);
     const char* event = "{\"b\": false, \"i\": 1}";
     struct report_err* report = make_report_err();
 #if defined(DEBUG)
@@ -97,6 +98,7 @@ int test_int_fail()
     const size_t exprs_count = 1;
     betree_bulk_insert(tree, exprs, exprs_count);
 
+    betree_make_sub_ids(tree);
     const char* event = "{\"b\": true, \"i\": 2}";
     struct report_err* report = make_report_err();
 #if defined(DEBUG)
@@ -127,6 +129,7 @@ int test_float_fail()
     const size_t exprs_count = 1;
     betree_bulk_insert(tree, exprs, exprs_count);
 
+    betree_make_sub_ids(tree);
     const char* event = "{\"b\": true, \"f\": 0.2}";
     struct report_err* report = make_report_err();
 #if defined(DEBUG)
@@ -157,6 +160,7 @@ int test_bin_fail()
     const size_t exprs_count = 1;
     betree_bulk_insert(tree, exprs, exprs_count);
 
+    betree_make_sub_ids(tree);
     const char* event = "{\"b\": true, \"s\": \"betree\"}";
     struct report_err* report = make_report_err();
 #if defined(DEBUG)
@@ -187,13 +191,17 @@ int test_int_list_fail()
     const size_t exprs_count = 1;
     betree_bulk_insert(tree, exprs, exprs_count);
 
+    betree_make_sub_ids(tree);
     const char* event = "{\"b\": true, \"il\": [3]}";
     struct report_err* report = make_report_err();
+
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     /* TODO: change function & asserts to check fail reasons */
     betree_search_err(tree, event, report);
+
+    printf("int list fail reason %d\n", hashtable_get(report->reason_sub_id_list, "il"));
     mu_assert(report->matched == 0, "goodEvent");
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
@@ -217,6 +225,7 @@ int test_bin_list_fail()
     const size_t exprs_count = 1;
     betree_bulk_insert(tree, exprs, exprs_count);
 
+    betree_make_sub_ids(tree);
     const char* event = "{\"b\": true, \"sl\": [\"how\"]}";
     struct report_err* report = make_report_err();
 #if defined(DEBUG)
@@ -247,6 +256,7 @@ int test_segments_fail()
     const size_t exprs_count = 1;
     betree_bulk_insert(tree, exprs, exprs_count);
 
+    betree_make_sub_ids(tree);
     const char* event
         = "{\"now\": 30, \"seg\": [[1, 10000000]], \"segments_with_timestamp\": [[1, 10000000]]}";
     struct report_err* report = make_report_err();
@@ -282,6 +292,7 @@ int test_frequency_cap_fail()
     const size_t exprs_count = 1;
     betree_bulk_insert_with_constants(tree, exprs, exprs_count, constants, constant_count);
 
+    betree_make_sub_ids(tree);
     const char* event
         = "{\"now\": 30, \"frequency_caps\": [[\"campaign\", 30, \"namespace\", 20, 10]]}";
     struct report_err* report = make_report_err();
@@ -313,6 +324,7 @@ int test_geo_fail()
     const size_t exprs_count = 1;
     betree_bulk_insert(tree, exprs, exprs_count);
 
+    betree_make_sub_ids(tree);
     const char* event = "{\"b\": true, \"latitude\": 101.0, \"longitude\": 99.0}";
     struct report_err* report = make_report_err();
 #if defined(DEBUG)
@@ -343,6 +355,7 @@ int test_int64_fail()
     const size_t exprs_count = 1;
     betree_bulk_insert(tree, exprs, exprs_count);
 
+    betree_make_sub_ids(tree);
     const char* event = "{\"b\": true, \"now\": 2}";
     struct report_err* report = make_report_err();
 #if defined(DEBUG)
@@ -377,6 +390,7 @@ int test_short_circuit_fail()
     const size_t exprs_count = 3;
     betree_bulk_insert(tree, exprs, exprs_count);
 
+    betree_make_sub_ids(tree);
     const char* event = "{\"b\": true, \"i\": 0}";
     struct report_err* report = make_report_err();
 #if defined(DEBUG)
@@ -413,6 +427,7 @@ int test_multiple_bool_exprs_fail()
     const size_t exprs_count = 5;
     betree_bulk_insert(tree, exprs, exprs_count);
 
+    betree_make_sub_ids(tree);
     const char* event = "{\"b\": false, \"i\": 2, \"f\": 0.2, \"s\": \"s3\"}";
     struct report_err* report = make_report_err();
 #if defined(DEBUG)
@@ -448,6 +463,9 @@ int test_memoize_fail()
     const size_t exprs_count = 5;
     betree_bulk_insert(tree, exprs, exprs_count);
 
+    betree_make_sub_ids(tree);
+
+    betree_make_sub_ids(tree);
     const char* event = "{\"b\": false, \"i\": 3, \"f\": 0.0, \"s\": \"s12\"}";
     struct report_err* report = make_report_err();
 #if defined(DEBUG)
@@ -511,7 +529,7 @@ void betree_bulk_insert(struct betree_err* tree, const char** exprs, int count)
 #if defined(DEBUG)
         fprintf(stderr, "betree_insert exprs[%d] ... %s\n", idx, exprs[i]);
 #endif
-        mu_assert(betree_insert(tree, idx, exprs[i]), "");
+        mu_assert(betree_insert_err(tree, idx, exprs[i]), "");
     }
 }
 
@@ -528,7 +546,7 @@ void betree_bulk_insert_with_constants(struct betree_err* tree,
         fprintf(stderr, "betree_insert exprs[%d] ... %s\n", idx, exprs[i]);
 #endif
         mu_assert(
-            betree_insert_with_constants(tree, idx, constants_count, constants, exprs[i]), "");
+            betree_insert_with_constants_err(tree, idx, constants_count, constants, exprs[i]), "");
     }
 }
 
