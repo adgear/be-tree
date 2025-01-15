@@ -608,7 +608,6 @@ bool betree_search(const struct betree* tree, const char* event_str, struct repo
     return result;
 }
 
-
 bool betree_search_ids(const struct betree* tree, const char* event_str, struct report* report, const uint64_t* ids, size_t sz)
 {
     struct betree_event* event = make_event_from_string(tree, event_str);

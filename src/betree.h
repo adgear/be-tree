@@ -3,8 +3,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include "arraylist.h"
-#include "hashtable.h"
 
 typedef uint64_t betree_sub_t;
 
@@ -143,7 +141,6 @@ bool betree_exists_with_event(const struct betree* betree, struct betree_event* 
 //bool betree_delete(struct betree* betree, betree_sub_t id);
 
 struct report* make_report();
-
 void free_report(struct report* report);
 
 struct report_counting* make_report_counting();

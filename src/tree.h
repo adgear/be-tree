@@ -157,7 +157,6 @@ bool betree_search_with_preds(const struct config* config,
     const struct betree_variable** preds,
     const struct cnode* cnode,
     struct report* report);
-
 bool betree_search_with_preds_ids(const struct config* config,
     const struct betree_variable** preds,
     const struct cnode* cnode,

@@ -27,6 +27,7 @@ static void search_cdir_ids(const struct attr_domain** attr_domains,
 
 static bool is_id_in(uint64_t id, const uint64_t* ids, size_t sz);
 
+
 void init_subs_to_eval(struct subs_to_eval* subs)
 {
     size_t init = 10;
@@ -193,6 +194,7 @@ void match_be_tree(const struct attr_domain** attr_domains,
         }
     }
 }
+
 
 static void match_be_tree_ids(const struct attr_domain** attr_domains,
     const struct betree_variable** preds,
@@ -1943,6 +1945,7 @@ bool betree_search_with_preds(const struct config* config,
     bfree(preds);
     return true;
 }
+
 
 static bool is_id_in(uint64_t id, const uint64_t* ids, size_t sz) {
     if (sz == 0) {
