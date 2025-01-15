@@ -7,6 +7,7 @@
 #include "betree.h"
 #include "tree.h"
 #include "utils.h"
+#include "betree_err.h"
 
 static bool should_print_cnode(const struct cnode* cnode)
 {
@@ -776,6 +777,15 @@ void wrt_dot_to_file(const struct betree* tree, FILE* f)
 }
 
 void write_dot_to_file(const struct betree* tree, const char* fname) {
+    FILE* f = fopen(fname, "w");
+    if(f == NULL) {
+        fprintf(stderr, "Can't open file %s  to write the dot_file", fname);
+        abort();
+    }
+    wrt_dot_to_file(tree, f);
+}
+
+void write_dot_to_file_err(const struct betree_err* tree, const char* fname) {
     FILE* f = fopen(fname, "w");
     if(f == NULL) {
         fprintf(stderr, "Can't open file %s  to write the dot_file", fname);
