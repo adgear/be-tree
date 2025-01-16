@@ -43,10 +43,10 @@ struct arraylist {
  */
 arraylist* arraylist_create()
 {
-	arraylist* new_list = malloc(sizeof(arraylist));
+	arraylist* new_list = bmalloc(sizeof(arraylist));
 	new_list->size = 0;
 	// Allocate the array
-	new_list->body = malloc(sizeof(void*) * ARRAYLIST_INITIAL_CAPACITY);
+	new_list->body = bmalloc(sizeof(void*) * ARRAYLIST_INITIAL_CAPACITY);
 	assert(new_list->body);
 	new_list->capacity = ARRAYLIST_INITIAL_CAPACITY;
 	return new_list;
@@ -63,7 +63,7 @@ void arraylist_allocate(arraylist* l, unsigned int size)
 		while (new_capacity < size) {
 			new_capacity *= 2;
 		}
-		l->body = realloc(l->body, sizeof(void*) * new_capacity);
+		l->body = brealloc(l->body, sizeof(void*) * new_capacity);
 		assert(l->body);
 		l->capacity = new_capacity;
 	}
@@ -200,7 +200,7 @@ void arraylist_splice(arraylist* l, arraylist* source, unsigned int index)
 
 void arraylist_destroy(arraylist* l)
 {
-	free(l->body);
-	free(l);
+	bfree(l->body);
+	bfree(l);
 }
 

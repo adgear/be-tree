@@ -53,17 +53,15 @@ static void add_reason_sub_id_list(
     betree_sub_t sub_id
 )
 {
-    if(variable_name == NULL)
-        variable_name = "NULL";    
     if(hashtable_get(report->reason_sub_id_list, variable_name) == NULL)
     {
         arraylist* sub_id_list = arraylist_create();
-        hashtable_set(report->reason_sub_id_list, variable_name, sub_id_list);
+        hashtable_set(report->reason_sub_id_list, bstrdup(variable_name), sub_id_list);
     }    
     arraylist_add(hashtable_get(report->reason_sub_id_list, variable_name), sub_id);
 }
 
-static void set_reason_sub_id_lists(
+void set_reason_sub_id_lists(
     struct report_err* report,
     const char* variable_name,
     struct arraylist* sub_ids
@@ -75,7 +73,7 @@ static void set_reason_sub_id_lists(
     if(hashtable_get(report->reason_sub_id_list, variable_name) == NULL)
     {
         arraylist* sub_id_list = arraylist_create();
-        hashtable_set(report->reason_sub_id_list, variable_name, sub_id_list);
+        hashtable_set(report->reason_sub_id_list, bstrdup(variable_name), sub_id_list);
     }    
     if(sub_ids->size > 0)
         arraylist_join(hashtable_get(report->reason_sub_id_list, variable_name), sub_ids);
@@ -127,6 +125,19 @@ static enum short_circuit_e try_short_circuit_err(size_t attr_domains_count,
     return SHORT_CIRCUIT_NONE;
 }
 
+
+static void free_memoize_table(hashtable* memoize_table)
+{
+    for(size_t i=0;i < memoize_table->capacity; i++)
+        {
+            if(memoize_table->body[i].key && memoize_table->body[i].value){
+                bfree(memoize_table->body[i].key);
+                bfree(memoize_table->body[i].value);
+            }
+        }
+    hashtable_destroy(memoize_table);
+}
+
 bool match_sub_err(size_t attr_domains_count,
     const struct betree_variable** preds,
     const struct betree_sub* sub,
@@ -134,7 +145,8 @@ bool match_sub_err(size_t attr_domains_count,
     struct memoize* memoize,
     const uint64_t* undefined,
     char* last_reason,
-    struct attr_domain** attr_domains)
+    struct attr_domain** attr_domains,
+    hashtable* memoize_table)
 {
     enum short_circuit_e short_circuit = try_short_circuit_err(attr_domains_count, &sub->short_circuit, undefined, attr_domains, report, sub->id);
     if(short_circuit != SHORT_CIRCUIT_NONE) {
@@ -148,8 +160,9 @@ bool match_sub_err(size_t attr_domains_count,
             return false;
         }
     }
-    hashtable* memoize_table = hashtable_create();
     bool result = match_node_err(preds, sub->expr, memoize, report, last_reason, memoize_table);
+
+
     return result;
 }
 
@@ -1548,12 +1561,13 @@ bool betree_search_with_preds_err(const struct config* config,
     struct subs_to_eval subs;
     init_subs_to_eval(&subs);
     match_be_tree_err((const struct attr_domain**)config->attr_domains, preds, cnode, &subs, report);
+    hashtable* memoize_table = hashtable_create();
     for(size_t i = 0; i < subs.count; i++) {
         const struct betree_sub* sub = subs.subs[i];
         report->evaluated++;
         char last_reason[512];
         if(match_sub_err(config->attr_domain_count, preds, sub, report, &memoize, undefined, last_reason, 
-        (struct attr_domain**)config->attr_domains) == true) {
+        (struct attr_domain**)config->attr_domains, memoize_table) == true) {
             add_sub_err(sub->id, report);
         }
         else{
@@ -1564,6 +1578,7 @@ bool betree_search_with_preds_err(const struct config* config,
     free_memoize(memoize);
     bfree(undefined);
     bfree(preds);
+    free_memoize_table(memoize_table);
     return true;
 }
 
@@ -1582,11 +1597,13 @@ bool betree_search_with_preds_ids_err(const struct config* config,
     struct subs_to_eval subs;
     init_subs_to_eval(&subs);
     match_be_tree_ids_err((const struct attr_domain**)config->attr_domains, preds, cnode, &subs, ids, sz, report);
+    hashtable* memoize_table = hashtable_create();
     for(size_t i = 0; i < subs.count; i++) {
         const struct betree_sub* sub = subs.subs[i];
         report->evaluated++;
         char last_reason[512];
-        if(match_sub_err(config->attr_domain_count, preds, sub, report, &memoize, undefined, last_reason, (struct attr_domain**)config->attr_domains) == true) {
+        if(match_sub_err(config->attr_domain_count, preds, sub, report, &memoize, undefined, last_reason,
+        (struct attr_domain**)config->attr_domains, memoize_table) == true) {
             add_sub_err(sub->id, report);
         }
     }
@@ -1594,6 +1611,7 @@ bool betree_search_with_preds_ids_err(const struct config* config,
     free_memoize(memoize);
     bfree(undefined);
     bfree(preds);
+    free_memoize_table(memoize_table);
     return true;
 }
 

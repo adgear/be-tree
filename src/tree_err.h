@@ -77,7 +77,8 @@ bool match_sub_err(size_t attr_domains_count,
     struct memoize* memoize,
     const uint64_t* undefined,
     char* last_reason,
-    struct attr_domain** attr_domains);
+    struct attr_domain** attr_domains,
+    hashtable* memoize_table);
 
 void add_sub_err(betree_sub_t id, struct report_err* report);
 
@@ -110,3 +111,9 @@ bool insert_be_tree_err(const struct config* config, const struct betree_sub* su
 
 void build_sub_ids_cdir(struct cdir_err* cd);
 void build_sub_ids_cnode(struct cnode_err* cn);
+
+void set_reason_sub_id_lists(
+    struct report_err* report,
+    const char* variable_name,
+    struct arraylist* sub_ids
+);

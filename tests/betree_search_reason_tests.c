@@ -465,7 +465,6 @@ int test_memoize_fail()
 
     betree_make_sub_ids(tree);
 
-    betree_make_sub_ids(tree);
     const char* event = "{\"b\": false, \"i\": 3, \"f\": 0.0, \"s\": \"s12\"}";
     struct report_err* report = make_report_err();
 #if defined(DEBUG)

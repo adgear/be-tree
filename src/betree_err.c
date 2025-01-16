@@ -519,6 +519,7 @@ static bool betree_search_with_event_filled_err(
         = make_environment(betree->config->attr_domain_count, event);
     if(validate_variables(betree->config, variables) == false) {
         fprintf(stderr, "Failed to validate event\n");
+        set_reason_sub_id_lists(report->reason_sub_id_list, betree->sub_ids, "invalid_event");
         return false;
     }
     return betree_search_with_preds_err(betree->config, variables, betree->cnode, report);
@@ -530,6 +531,7 @@ bool betree_search_with_event_filled_ids_err(const struct betree_err* betree, st
         = make_environment(betree->config->attr_domain_count, event);
     if(validate_variables(betree->config, variables) == false) {
         fprintf(stderr, "Failed to validate event\n");
+        set_reason_sub_id_lists(report->reason_sub_id_list, betree->sub_ids, "invalid_event");
         return false;
     }
     return betree_search_with_preds_ids_err(betree->config, variables, betree->cnode, report, ids, sz);
@@ -590,6 +592,13 @@ struct report_err* make_report_err()
 
 void free_report_err(struct report_err* report)
 {
+    for(size_t i=0;i < report->reason_sub_id_list->capacity; i++)
+    {
+        if(report->reason_sub_id_list->body[i].key && report->reason_sub_id_list->body[i].value){
+            bfree(report->reason_sub_id_list->body[i].key);
+            arraylist_destroy((arraylist*)report->reason_sub_id_list->body[i].value);
+        }
+    }
     bfree(report->reason_sub_id_list);
     bfree(report->subs);
     bfree(report);
@@ -599,6 +608,7 @@ static void betree_init_with_config_err(struct betree_err* betree, struct config
 {
     betree->config = config;
     betree->cnode = make_cnode_err(betree->config, NULL);
+    betree->sub_ids = arraylist_create();
 }
 
 void betree_init_err(struct betree_err* betree)
@@ -634,7 +644,7 @@ void betree_deinit_err(struct betree_err* betree)
 {
     free_cnode_err(betree->cnode);
     free_config(betree->config);
-    if(betree->sub_ids) arraylist_destroy(betree->sub_ids);
+    arraylist_destroy(betree->sub_ids);
 }
 
 void betree_free_err(struct betree_err* betree)

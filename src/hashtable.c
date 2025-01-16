@@ -106,7 +106,7 @@ void hashtable_remove(hashtable* t, char* key)
  */
 hashtable* hashtable_create()
 {
-	hashtable* new_ht = malloc(sizeof(hashtable));
+	hashtable* new_ht = bmalloc(sizeof(hashtable));
 	new_ht->size = 0;
 	new_ht->capacity = HASHTABLE_INITIAL_CAPACITY;
 	new_ht->body = hashtable_body_allocate(new_ht->capacity);
@@ -118,8 +118,8 @@ hashtable* hashtable_create()
  */
 hashtable_entry* hashtable_body_allocate(unsigned int capacity)
 {
-	// calloc fills the allocated memory with zeroes
-	return (hashtable_entry*)calloc(capacity, sizeof(hashtable_entry));
+	// bcalloc fills the allocated memory with zeroes
+	return (hashtable_entry*)bcalloc(capacity, sizeof(hashtable_entry));
 }
 
 /**
@@ -146,6 +146,6 @@ void hashtable_resize(hashtable* t, unsigned int capacity)
  */
 void hashtable_destroy(hashtable* t)
 {
-	free(t->body);
-	free(t);
+	bfree(t->body);
+	bfree(t);
 }
