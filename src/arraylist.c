@@ -10,6 +10,20 @@
 #include <assert.h>
 #include "arraylist.h"
 
+#ifdef NIF
+#include <erl_nif.h>
+#define bmalloc enif_alloc
+#define bcalloc enif_calloc
+#define brealloc enif_realloc
+#define bfree enif_free
+void* enif_calloc(size_t size);
+#else
+#define bmalloc malloc
+#define bcalloc(x) calloc(x, 1)
+#define brealloc realloc
+#define bfree free
+#endif
+
 /*
  * Interface section used for `makeheaders`.
  */
