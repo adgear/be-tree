@@ -16,6 +16,8 @@
 #include "tree_err.h"
 #include "utils.h"
 
+#define DEBUG 1
+
 enum ATTR_DOMAIN_POSITION {
     ATTR_BOOL = 0,
     ATTR_INT,
@@ -537,6 +539,57 @@ int test_memoize_fail()
     return 0;
 }
 
+int test_all_search_term()
+{
+    struct betree_err* tree = betree_make_err();
+
+    const int constant_count = 4;
+    const struct betree_constant* constants[] = { betree_make_integer_constant("campaign_id", 10),
+        betree_make_integer_constant("advertiser_id", 20),
+        betree_make_integer_constant("flight_id", 30),
+        betree_make_integer_constant("product_id", 40) };
+
+    make_attr_domains(tree,
+        ATTR_CONFIG_9(ATTR_BOOL,
+            ATTR_INT,
+            ATTR_FLOAT,
+            ATTR_STR,
+            ATTR_FCAP,
+            ATTR_STR_LIST,
+            ATTR_INT_LIST,
+            ATTR_SEGMENTS,
+            ATTR_INT64));
+
+    const char* exprs[]
+        = { "b and i = 10 and f > 3.13 and s = \"good\" and 1 in il and sl none of (\"good\") and "
+            "segment_within(seg, 1, 20) and within_frequency_cap(\"flight\", \"ns\", 100, 0)",
+              "i = 10 and f > 3.13 and s = \"good\" and 1 in il and sl none of (\"good\") and "
+              "segment_within(seg, 1, 20) and within_frequency_cap(\"flight\", \"ns\", 100, 0)" };
+    const size_t exprs_count = 2;
+
+    betree_bulk_insert_with_constants(tree, exprs, exprs_count, constants, constant_count);
+
+    betree_make_sub_ids(tree);
+
+    const char* event = "{\"b\": true, \"i\": 10, \"f\": 3.14, \"s\": \"good\", \"il\": [1,2,3], "
+                        "\"sl\": [\"bad\"], \"seg\": [[1, 10000000]], \"frequency_caps\": "
+                        "[[\"flight\", 10, \"ns\", 0, 0]], \"now\": 0}";
+    struct report_err* report = make_report_err();
+#if defined(DEBUG)
+    fprintf(stderr, "search ... %s\n", event);
+#endif
+    betree_search_err(tree, event, report);
+
+    mu_assert(report->matched == 2, "goodEvent");
+
+    free_report_err(report);
+    betree_free_err(tree);
+#if defined(DEBUG)
+    fprintf(stderr, "\n");
+#endif
+    return 0;
+}
+
 
 void make_attr_domains(struct betree_err* tree, size_t config)
 {
@@ -622,6 +675,8 @@ int all_tests()
     mu_run_test(test_multiple_bool_exprs_fail);
 
     mu_run_test(test_memoize_fail);
+
+    mu_run_test(test_all_search_term);
 
     return 0;
 }
