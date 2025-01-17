@@ -4,17 +4,19 @@
 
 #include "alloc.h"
 #include "ast.h"
+#include "ast_err.h"
 #include "betree.h"
 #include "betree_err.h"
 #include "tree.h"
+#include "tree_err.h"
 #include "utils.h"
 
-static bool should_print_cnode(const struct cnode* cnode)
+static bool should_print_cnode(const struct cnode_err* cnode)
 {
     return cnode->pdir != NULL || cnode->lnode->sub_count > 0;
 }
 
-static const char* get_path_cnode(const struct config* config, const struct cnode* cnode);
+static const char* get_path_cnode(const struct config* config, const struct cnode_err* cnode);
 
 static const char* escape_name(const char* input)
 {
@@ -36,7 +38,7 @@ static const char* escape_name(const char* input)
     return escaped;
 }
 
-static const char* get_path_pnode(const struct config* config, const struct pnode* pnode)
+static const char* get_path_pnode(const struct config* config, const struct pnode_err* pnode)
 {
     char* name;
     const char* parent_path = get_path_cnode(config, pnode->parent->parent);
@@ -49,7 +51,7 @@ static const char* get_path_pnode(const struct config* config, const struct pnod
     return name;
 }
 
-static const char* get_path_cdir(const struct config* config, const struct cdir* cdir, bool first)
+static const char* get_path_cdir(const struct config* config, const struct cdir_err* cdir, bool first)
 {
     const char* parent_path = NULL;
     switch(cdir->parent_type) {
@@ -117,7 +119,7 @@ static const char* get_path_cdir(const struct config* config, const struct cdir*
     return name;
 }
 
-static const char* get_path_cnode(const struct config* config, const struct cnode* cnode)
+static const char* get_path_cnode(const struct config* config, const struct cnode_err* cnode)
 {
     if(cnode->parent == NULL) {
         return bstrdup("");
@@ -125,7 +127,7 @@ static const char* get_path_cnode(const struct config* config, const struct cnod
     return get_path_cdir(config, cnode->parent, true);
 }
 
-static const char* get_name_pnode(const struct config* config, const struct pnode* pnode)
+static const char* get_name_pnode(const struct config* config, const struct pnode_err* pnode)
 {
     char* name;
     const char* path = get_path_pnode(config, pnode);
@@ -136,7 +138,7 @@ static const char* get_name_pnode(const struct config* config, const struct pnod
     return name;
 }
 
-static const char* get_name_cdir(const struct config* config, const struct cdir* cdir)
+static const char* get_name_cdir(const struct config* config, const struct cdir_err* cdir)
 {
     char* name;
     const char* path = get_path_cdir(config, cdir, true);
@@ -147,7 +149,7 @@ static const char* get_name_cdir(const struct config* config, const struct cdir*
     return name;
 }
 
-static const char* get_name_cnode(const struct config* config, const struct cnode* cnode)
+static const char* get_name_cnode(const struct config* config, const struct cnode_err* cnode)
 {
     if(cnode->parent == NULL) {
         return bstrdup("cnode_root");
@@ -161,7 +163,7 @@ static const char* get_name_cnode(const struct config* config, const struct cnod
     return name;
 }
 
-static const char* get_name_lnode(const struct config* config, const struct lnode* lnode)
+static const char* get_name_lnode(const struct config* config, const struct lnode_err* lnode)
 {
     char* name;
     const char* path = get_path_cnode(config, lnode->parent);
@@ -172,7 +174,7 @@ static const char* get_name_lnode(const struct config* config, const struct lnod
     return name;
 }
 
-static const char* get_name_pdir(const struct config* config, const struct pdir* pdir)
+static const char* get_name_pdir(const struct config* config, const struct pdir_err* pdir)
 {
     char* name;
     const char* path = get_path_cnode(config, pdir->parent);
@@ -189,7 +191,7 @@ static void print_spaces(FILE* f, uint64_t level)
 }
 
 static void write_dot_file_lnode_names(
-    FILE* f, const struct config* config, const struct lnode* lnode, uint64_t level)
+    FILE* f, const struct config* config, const struct lnode_err* lnode, uint64_t level)
 {
     const char* name = get_name_lnode(config, lnode);
     print_spaces(f, level);
@@ -217,7 +219,7 @@ static void write_dot_file_lnode_names(
 }
 
 static void write_dot_file_cnode_names(
-    FILE* f, const struct config* config, const struct cnode* cnode, uint64_t level);
+    FILE* f, const struct config* config, const struct cnode_err* cnode, uint64_t level);
 
 static uint64_t colspan_value(uint64_t level)
 {
@@ -229,13 +231,13 @@ static uint64_t colspan_value(uint64_t level)
 
 static void write_dot_file_cdir_td(FILE* f,
     const struct config* config,
-    const struct cdir* cdir,
+    const struct cdir_err* cdir,
     uint64_t level,
     size_t current_depth,
     uint64_t colspan)
 {
-    const struct cdir* left = cdir != NULL ? cdir->lchild : NULL;
-    const struct cdir* right = cdir != NULL ? cdir->rchild : NULL;
+    const struct cdir_err* left = cdir != NULL ? cdir->lchild : NULL;
+    const struct cdir_err* right = cdir != NULL ? cdir->rchild : NULL;
 
     if(current_depth == 0) {
         print_spaces(f, level);
@@ -308,7 +310,7 @@ static void write_dot_file_cdir_td(FILE* f,
 
 static void write_dot_file_cdir_inner_names(FILE* f,
     const struct config* config,
-    const struct cdir* cdir,
+    const struct cdir_err* cdir,
     uint64_t level,
     size_t depth_of_cdir)
 {
@@ -325,7 +327,7 @@ static void write_dot_file_cdir_inner_names(FILE* f,
 }
 
 static void write_dot_file_cdir_cnode_names(
-    FILE* f, const struct config* config, const struct cdir* cdir, uint64_t level)
+    FILE* f, const struct config* config, const struct cdir_err* cdir, uint64_t level)
 {
     if(cdir->cnode != NULL && should_print_cnode(cdir->cnode)) {
         write_dot_file_cnode_names(f, config, cdir->cnode, level);
@@ -338,18 +340,13 @@ static void write_dot_file_cdir_cnode_names(
     }
 }
 
-/*
-static void write_dot_file_cdir_cdir_ranks(
-    FILE* f, const struct config* config, const struct cdir* cdir, uint64_t level);
-*/
-
-static size_t depth_of_cdir(const struct cdir* cdir)
+static size_t depth_of_cdir(const struct cdir_err* cdir)
 {
     if(cdir == NULL) {
         return 0;
     }
     size_t current = 1;
-    const struct cdir* parent = cdir->parent_type == CNODE_PARENT_CDIR ? cdir->cdir_parent : NULL;
+    const struct cdir_err* parent = cdir->parent_type == CNODE_PARENT_CDIR ? cdir->cdir_parent : NULL;
     while(parent != NULL) {
         current++;
         if(parent->parent_type == CNODE_PARENT_PNODE) {
@@ -364,7 +361,7 @@ static size_t depth_of_cdir(const struct cdir* cdir)
 }
 
 static void write_dot_file_cdir_names(
-    FILE* f, const struct config* config, const struct cdir* cdir, uint64_t level)
+    FILE* f, const struct config* config, const struct cdir_err* cdir, uint64_t level)
 {
     const char* name = get_name_cdir(config, cdir);
     print_spaces(f, level);
@@ -396,7 +393,7 @@ static void write_dot_file_cdir_names(
 }
 
 static void write_dot_file_pnode_names(
-    FILE* f, const struct config* config, const struct pnode* pnode, uint64_t level)
+    FILE* f, const struct config* config, const struct pnode_err* pnode, uint64_t level)
 {
     const char* name = get_name_pnode(config, pnode);
     print_spaces(f, level);
@@ -416,10 +413,10 @@ static void write_dot_file_pnode_names(
 }
 
 static void write_dot_file_pdir_inner_names(
-    FILE* f, const struct config* config, const struct pdir* pdir, uint64_t level)
+    FILE* f, const struct config* config, const struct pdir_err* pdir, uint64_t level)
 {
     for(size_t i = 0; i < pdir->pnode_count; i++) {
-        const struct pnode* pnode = pdir->pnodes[i];
+        const struct pnode_err* pnode = pdir->pnodes[i];
         const char* name = get_name_pnode(config, pnode);
         print_spaces(f, level);
         fprintf(f,
@@ -431,7 +428,7 @@ static void write_dot_file_pdir_inner_names(
 }
 
 static void write_dot_file_pdir_names(
-    FILE* f, const struct config* config, const struct pdir* pdir, uint64_t level)
+    FILE* f, const struct config* config, const struct pdir_err* pdir, uint64_t level)
 {
     const char* name = get_name_pdir(config, pdir);
     print_spaces(f, level);
@@ -452,7 +449,7 @@ static void write_dot_file_pdir_names(
 }
 
 static void write_dot_file_cnode_names(
-    FILE* f, const struct config* config, const struct cnode* cnode, uint64_t level)
+    FILE* f, const struct config* config, const struct cnode_err* cnode, uint64_t level)
 {
     const char* name = get_name_cnode(config, cnode);
     print_spaces(f, level);
@@ -470,11 +467,11 @@ static void write_dot_file_cnode_names(
 }
 
 static void write_dot_file_cnode_links(
-    FILE* f, const struct config* config, const struct cnode* cnode, uint64_t level);
+    FILE* f, const struct config* config, const struct cnode_err* cnode, uint64_t level);
 
 static void write_dot_file_cdir_links(FILE* f,
     const struct config* config,
-    const struct cdir* cdir,
+    const struct cdir_err* cdir,
     uint64_t level,
     const char* table_name)
 {
@@ -496,7 +493,7 @@ static void write_dot_file_cdir_links(FILE* f,
 }
 
 static void write_dot_file_pnode_links(
-    FILE* f, const struct config* config, const struct pnode* pnode, uint64_t level)
+    FILE* f, const struct config* config, const struct pnode_err* pnode, uint64_t level)
 {
     if(pnode->cdir != NULL) {
         const char* pnode_name = get_name_pnode(config, pnode);
@@ -513,16 +510,16 @@ static void write_dot_file_pnode_links(
 }
 
 static void write_dot_file_pdir_links(
-    FILE* f, const struct config* config, const struct pdir* pdir, uint64_t level)
+    FILE* f, const struct config* config, const struct pdir_err* pdir, uint64_t level)
 {
     for(size_t i = 0; i < pdir->pnode_count; i++) {
-        const struct pnode* pnode = pdir->pnodes[i];
+        const struct pnode_err* pnode = pdir->pnodes[i];
         write_dot_file_pnode_links(f, config, pnode, level);
     }
 }
 
 static void write_dot_file_cnode_links(
-    FILE* f, const struct config* config, const struct cnode* cnode, uint64_t level)
+    FILE* f, const struct config* config, const struct cnode_err* cnode, uint64_t level)
 {
     const char* cnode_name = get_name_cnode(config, cnode);
     if(cnode->lnode != NULL) {
@@ -548,7 +545,7 @@ static void write_dot_file_cnode_links(
 }
 
 static void write_dot_file_cdir_cnode_ranks(
-    FILE* f, const struct config* config, const struct cdir* cdir, uint64_t level, bool first)
+    FILE* f, const struct config* config, const struct cdir_err* cdir, uint64_t level, bool first)
 {
     if(cdir->cnode != NULL && should_print_cnode(cdir->cnode)) {
         const char* cnode_name = get_name_cnode(config, cdir->cnode);
@@ -569,81 +566,11 @@ static void write_dot_file_cdir_cnode_ranks(
     }
 }
 
-/*
-struct cdir_acc {
-    size_t count;
-    struct cdir** cdirs;
-};
-
-static void add_cdir(const struct cdir* cdir, struct cdir_acc* acc)
-{
-    if(acc->count == 0) {
-        acc->cdirs = bcalloc(1, sizeof(*acc->cdirs));
-        if(acc->cdirs == NULL) {
-            fprintf(stderr, "%s bcalloc failed", __func__);
-            abort();
-        }
-    }
-    else {
-        struct cdir** next_cdirs = brealloc(acc->cdirs, sizeof(*next_cdirs) * (acc->count + 1));
-        if(next_cdirs == NULL) {
-            fprintf(stderr, "%s brealloc failed", __func__);
-            abort();
-        }
-        acc->cdirs = next_cdirs;
-    }
-    acc->cdirs[acc->count] = (struct cdir*)cdir;
-    acc->count++;
-}
-
-static void get_inner_cdir(const struct cdir* cdir, size_t remaining, struct cdir_acc* acc)
-{
-    if(remaining == 0) {
-        add_cdir(cdir, acc);
-    }
-    else {
-        if(cdir->lchild != NULL) {
-            get_inner_cdir(cdir->lchild, remaining - 1, acc);
-        }
-        if(cdir->rchild != NULL) {
-            get_inner_cdir(cdir->rchild, remaining - 1, acc);
-        }
-    }
-}
-
-static void write_dot_file_cdir_cdir_ranks(
-    FILE* f, const struct config* config, const struct cdir* cdir, uint64_t level)
-{
-    size_t remaining = 0;
-    while(true) {
-        struct cdir_acc acc = { .count = 0, .cdirs = NULL };
-        get_inner_cdir(cdir, remaining, &acc);
-        if(acc.count > 0) {
-            print_spaces(f, level);
-            fprintf(f, "{ rank=same; ");
-            for(size_t i = 0; i < acc.count; i++) {
-                const char* cdir_name = get_name_cdir(config, acc.cdirs[i]);
-                if(i != 0) {
-                    fprintf(f, ", ");
-                }
-                fprintf(f, "\"%s\"", cdir_name);
-            }
-            fprintf(f, " }\n");
-            remaining++;
-        }
-        else {
-            bfree(acc.cdirs);
-            return;
-        }
-    }
-}
-*/
-
 static void write_dot_file_cnode_ranks(
-    FILE* f, const struct config* config, const struct cnode* cnode, uint64_t level);
+    FILE* f, const struct config* config, const struct cnode_err* cnode, uint64_t level);
 
 static void write_dot_file_cdir_ranks(
-    FILE* f, const struct config* config, const struct cdir* cdir, uint64_t level, bool first)
+    FILE* f, const struct config* config, const struct cdir_err* cdir, uint64_t level, bool first)
 {
     if(first) {
         print_spaces(f, level);
@@ -663,7 +590,7 @@ static void write_dot_file_cdir_ranks(
 }
 
 static void write_dot_file_pnode_ranks(
-    FILE* f, const struct config* config, const struct pnode* pnode, uint64_t level)
+    FILE* f, const struct config* config, const struct pnode_err* pnode, uint64_t level)
 {
     if(pnode->cdir != NULL) {
         write_dot_file_cdir_ranks(f, config, pnode->cdir, level, true);
@@ -671,7 +598,7 @@ static void write_dot_file_pnode_ranks(
 }
 
 static void write_dot_file_pdir_ranks(
-    FILE* f, const struct config* config, const struct pdir* pdir, uint64_t level)
+    FILE* f, const struct config* config, const struct pdir_err* pdir, uint64_t level)
 {
     print_spaces(f, level);
     fprintf(f, "{ rank=same; ");
@@ -690,19 +617,19 @@ static void write_dot_file_pdir_ranks(
 }
 
 static void write_dot_file_cnode_ranks(
-    FILE* f, const struct config* config, const struct cnode* cnode, uint64_t level)
+    FILE* f, const struct config* config, const struct cnode_err* cnode, uint64_t level)
 {
     if(cnode->pdir != NULL) {
         write_dot_file_pdir_ranks(f, config, cnode->pdir, level);
     }
 }
 
-struct gathered_subs {
+struct gathered_subs_err {
     size_t count;
     struct betree_sub** subs;
 };
 
-static void add_sub_debug(const struct betree_sub* sub, struct gathered_subs* gatherer)
+static void add_sub_debug(const struct betree_sub* sub, struct gathered_subs_err* gatherer)
 {
     if(gatherer->count == 0) {
         gatherer->subs = bcalloc(sizeof(*gatherer->subs));
@@ -723,9 +650,9 @@ static void add_sub_debug(const struct betree_sub* sub, struct gathered_subs* ga
     gatherer->count++;
 }
 
-static void gather_subs_cnode(const struct cnode* cnode, struct gathered_subs* gatherer);
+static void gather_subs_cnode(const struct cnode_err* cnode, struct gathered_subs_err* gatherer);
 
-static void gather_subs_cdir(const struct cdir* cdir, struct gathered_subs* gatherer)
+static void gather_subs_cdir(const struct cdir_err* cdir, struct gathered_subs_err* gatherer)
 {
     if(cdir->cnode != NULL) {
         gather_subs_cnode(cdir->cnode, gatherer);
@@ -738,21 +665,21 @@ static void gather_subs_cdir(const struct cdir* cdir, struct gathered_subs* gath
     }
 }
 
-static void gather_subs_pnode(const struct pnode* pnode, struct gathered_subs* gatherer)
+static void gather_subs_pnode(const struct pnode_err* pnode, struct gathered_subs_err* gatherer)
 {
     if(pnode->cdir != NULL) {
         gather_subs_cdir(pnode->cdir, gatherer);
     }
 }
 
-static void gather_subs_pdir(const struct pdir* pdir, struct gathered_subs* gatherer)
+static void gather_subs_pdir(const struct pdir_err* pdir, struct gathered_subs_err* gatherer)
 {
     for(size_t i = 0; i < pdir->pnode_count; i++) {
         gather_subs_pnode(pdir->pnodes[i], gatherer);
     }
 }
 
-static void gather_subs_cnode(const struct cnode* cnode, struct gathered_subs* gatherer)
+static void gather_subs_cnode(const struct cnode_err* cnode, struct gathered_subs_err* gatherer)
 {
     for(size_t i = 0; i < cnode->lnode->sub_count; i++) {
         add_sub_debug(cnode->lnode->subs[i], gatherer);
@@ -762,10 +689,10 @@ static void gather_subs_cnode(const struct cnode* cnode, struct gathered_subs* g
     }
 }
 
-void wrt_dot_to_file(const struct betree* tree, FILE* f)
+void wrt_dot_to_file_err(const struct betree_err* tree, FILE* f)
 {
     const struct config* config = tree->config;
-    const struct cnode* root = tree->cnode;
+    const struct cnode_err* root = tree->cnode;
     fprintf(f, "digraph {\n");
     fprintf(f, "    compound=true");
     fprintf(f, "    node [fontsize=20, fontname=\"Verdana\"];\n");
@@ -776,23 +703,23 @@ void wrt_dot_to_file(const struct betree* tree, FILE* f)
     fprintf(f, "}\n");
 }
 
-void write_dot_to_file(const struct betree* tree, const char* fname)
+void write_dot_to_file_err(const struct betree_err* tree, const char* fname)
 {
     FILE* f = fopen(fname, "w");
     if(f == NULL) {
         fprintf(stderr, "Can't open file %s  to write the dot_file", fname);
         abort();
     }
-    wrt_dot_to_file(tree, f);
+    wrt_dot_to_file_err(tree, f);
 }
 
 // legacy
-void write_dot_file(const struct betree* tree)
+void write_dot_file_err(const struct betree_err* tree)
 {
     FILE* f = fopen("data/betree.dot", "we");
     if(f == NULL) {
         fprintf(stderr, "Can't open file data/betree.dot to write the dot_file");
         abort();
     }
-    wrt_dot_to_file(tree, f);
+    wrt_dot_to_file_err(tree, f);
 }
