@@ -2,7 +2,7 @@ set pagination off
 set logging file gdb.output
 set logging enabled on
 
-break betree_err.c:671
+break free_report_err
     command 1
     if hashtable_get(report->reason_sub_id_list, "b") 
         print "b"

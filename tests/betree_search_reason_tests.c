@@ -6,6 +6,8 @@
 
 #include "alloc.h"
 #include "betree_err.h"
+#include "hashtable.h"
+#include "arraylist.h"
 #include "debug.h"
 #include "helper.h"
 #include "minunit.h"
@@ -73,9 +75,10 @@ int test_bool_fail()
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
-    /* TODO: change function & asserts to check fail reasons */
     betree_search_err(tree, event, report);
+
     mu_assert(report->matched == 0, "goodEvent");
+    mu_assert(((arraylist*)hashtable_get(report->reason_sub_id_list, "b"))->body[0] == 1, "goodReason");
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -104,9 +107,10 @@ int test_int_fail()
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
-    /* TODO: change function & asserts to check fail reasons */
     betree_search_err(tree, event, report);
+
     mu_assert(report->matched == 0, "goodEvent");
+    mu_assert(((arraylist*)hashtable_get(report->reason_sub_id_list, "i"))->body[0] == 1, "goodReason");
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -135,9 +139,10 @@ int test_float_fail()
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
-    /* TODO: change function & asserts to check fail reasons */
     betree_search_err(tree, event, report);
+
     mu_assert(report->matched == 0, "goodEvent");
+    mu_assert(((arraylist*)hashtable_get(report->reason_sub_id_list, "f"))->body[0] == 1, "goodReason");
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -148,7 +153,6 @@ int test_float_fail()
 #endif
     return 0;
 }
-
 
 int test_bin_fail()
 {
@@ -166,9 +170,10 @@ int test_bin_fail()
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
-    /* TODO: change function & asserts to check fail reasons */
+
     betree_search_err(tree, event, report);
     mu_assert(report->matched == 0, "goodEvent");
+    mu_assert(((arraylist*)hashtable_get(report->reason_sub_id_list, "s"))->body[0] == 1, "goodReason");
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -198,11 +203,10 @@ int test_int_list_fail()
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
-    /* TODO: change function & asserts to check fail reasons */
     betree_search_err(tree, event, report);
 
-    printf("int list fail reason %d\n", hashtable_get(report->reason_sub_id_list, "il"));
     mu_assert(report->matched == 0, "goodEvent");
+    mu_assert(((arraylist*)hashtable_get(report->reason_sub_id_list, "il"))->body[0] == 1, "goodReason");
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -231,9 +235,10 @@ int test_bin_list_fail()
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
-    /* TODO: change function & asserts to check fail reasons */
     betree_search_err(tree, event, report);
+
     mu_assert(report->matched == 0, "goodEvent");
+    mu_assert(((arraylist*)hashtable_get(report->reason_sub_id_list, "sl"))->body[0] == 1, "goodReason");
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -263,9 +268,10 @@ int test_segments_fail()
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
-    /* TODO: change function & asserts to check fail reasons */
     betree_search_err(tree, event, report);
+
     mu_assert(report->matched == 0, "goodEvent");
+    mu_assert(((arraylist*)hashtable_get(report->reason_sub_id_list, "segments_with_timestamp"))->body[0] == 1, "goodReason");
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -299,9 +305,10 @@ int test_frequency_cap_fail()
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
-    /* TODO: change function & asserts to check fail reasons */
     betree_search_err(tree, event, report);
+
     mu_assert(report->matched == 0, "goodEvent");
+    mu_assert(((arraylist*)hashtable_get(report->reason_sub_id_list, "frequency_caps"))->body[0] == 1, "goodReason");
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -330,9 +337,10 @@ int test_geo_fail()
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
-    /* TODO: change function & asserts to check fail reasons */
     betree_search_err(tree, event, report);
+
     mu_assert(report->matched == 0, "goodEvent");
+    mu_assert(((arraylist*)hashtable_get(report->reason_sub_id_list, "geo"))->body[0] == 1, "goodReason");
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -361,9 +369,10 @@ int test_int64_fail()
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
-    /* TODO: change function & asserts to check fail reasons */
     betree_search_err(tree, event, report);
+
     mu_assert(report->matched == 0, "goodEvent");
+    mu_assert(((arraylist*)hashtable_get(report->reason_sub_id_list, "now"))->body[0] == 1, "goodReason");
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -396,9 +405,12 @@ int test_short_circuit_fail()
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
-    /* TODO: change function & asserts to check fail reasons */
     betree_search_err(tree, event, report);
+
     mu_assert(report->matched == 0, "goodEvent");
+    mu_assert(((arraylist*)hashtable_get(report->reason_sub_id_list, "f"))->body[0] == 1, "goodReason");
+    mu_assert(((arraylist*)hashtable_get(report->reason_sub_id_list, "s"))->body[0] == 2, "goodReason");
+    mu_assert(((arraylist*)hashtable_get(report->reason_sub_id_list, "il"))->body[0] == 3, "goodReason");
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests_short_circuit.dot");
 
@@ -434,7 +446,18 @@ int test_multiple_bool_exprs_fail()
     fprintf(stderr, "search ... %s\n", event);
 #endif
     betree_search_err(tree, event, report);
+
     mu_assert(report->matched == 0, "goodEvent");
+    mu_assert(((arraylist*)hashtable_get(report->reason_sub_id_list, "i"))->body[0] == 3, "goodReason");
+    mu_assert(((arraylist*)hashtable_get(report->reason_sub_id_list, "f"))->body[0] == 4, "goodReason");
+    const int expected_set[] = {1, 2, 5};
+    int found_total = 0;
+    for(size_t j = 0; j < 3; j++) {
+        for(size_t k = 0; k < 3; k++) {
+            found_total += (((arraylist*)hashtable_get(report->reason_sub_id_list, "s"))->body[k] == expected_set[j])? 1 : 0;
+        }
+    }
+    mu_assert(found_total == 3, "goodReason");
 
     write_dot_to_file_err(tree, "tests/beetree_search_reason_tests_multipl_bool_exprs.dot");
 
@@ -471,9 +494,18 @@ int test_memoize_fail()
     fprintf(stderr, "search ... %s\n", event);
 #endif
     betree_search_err(tree, event, report);
-    mu_assert(report->matched == 0, "goodEvent");
 
-    write_dot_to_file_err(tree, "tests/beetree_search_reason_tests_multipl_bool_exprs.dot");
+    mu_assert(report->matched == 0, "goodEvent");
+    const int expected_set[] = {1, 2, 3, 4, 5};
+    int found_total = 0;
+    for(size_t j = 0; j < 5; j++) {
+        for(size_t k = 0; k < 5; k++) {
+            found_total += (((arraylist*)hashtable_get(report->reason_sub_id_list, "s"))->body[k] == expected_set[j])? 1 : 0;
+        }
+    }
+    mu_assert(found_total == 5, "goodReason");
+
+    //write_dot_to_file_err(tree, "tests/beetree_search_reason_tests_multipl_bool_exprs.dot");
 
     free_report_err(report);
     betree_free_err(tree);

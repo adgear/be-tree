@@ -1,0 +1,70 @@
+digraph {
+    compound=true    node [fontsize=20, fontname="Verdana"];
+    "cnode_root" [label="c-node", color=darkolivegreen3, fillcolor=darkolivegreen3, style=filled, shape=circle, fixedsize=true, width=0.8]
+    "lnode_" [label="l-node", fillcolor=black, style=filled, fontcolor=white, shape=circle, fixedsize=true, width=0.8]
+    subgraph "clusterpdir_" {
+        color=lightpink; fillcolor=lightpink; style=filled; label="p-directory"; fontsize=20; fontname="Verdana"
+        "pnode__a" [label="a", color=cyan2, fillcolor=cyan2, style=filled, shape=record]
+    }
+    "pnode__a" [label="a", color=cyan2, fillcolor=cyan2, style=filled, shape=record]
+    "pnode__a_fake" [label="p-node", color=cyan2, fillcolor=cyan2, style=filled, shape=circle, fixedsize=true, width=0.8]
+    subgraph "clustercdir__a_0_0" {
+        color=orange; fillcolor=orange; style=filled; label="c-directory"; fontsize=20; fontname="Verdana"
+        cdir__a_0_0 [fillcolor=darkolivegreen3, style=filled, shape=box, label=<
+            <table>
+                <tr>
+                    <td colspan="1" port="cdir__a_0_0">[0, 0]</td>
+                </tr>
+            </table>
+        >]
+    }
+    "cnode__a_0_0" [label="c-node", color=darkolivegreen3, fillcolor=darkolivegreen3, style=filled, shape=circle, fixedsize=true, width=0.8]
+    "lnode__a_0_0" [label="l-node", fillcolor=black, style=filled, fontcolor=white, shape=circle, fixedsize=true, width=0.8]
+    "lnode__a_0_0_subs" [label=<\{S<sub>2</sub>\}>, color=lightblue1, fillcolor=lightblue1, style=filled, shape=record]
+    subgraph "clusterpdir__a_0_0" {
+        color=lightpink; fillcolor=lightpink; style=filled; label="p-directory"; fontsize=20; fontname="Verdana"
+        "pnode__a_0_0_b" [label="b", color=cyan2, fillcolor=cyan2, style=filled, shape=record]
+    }
+    "pnode__a_0_0_b" [label="b", color=cyan2, fillcolor=cyan2, style=filled, shape=record]
+    "pnode__a_0_0_b_fake" [label="p-node", color=cyan2, fillcolor=cyan2, style=filled, shape=circle, fixedsize=true, width=0.8]
+    subgraph "clustercdir__a_0_0_b_0_1" {
+        color=orange; fillcolor=orange; style=filled; label="c-directory"; fontsize=20; fontname="Verdana"
+        cdir__a_0_0_b_0_1 [fillcolor=darkolivegreen3, style=filled, shape=box, label=<
+            <table>
+                <tr>
+                    <td colspan="2" port="cdir__a_0_0_b_0_1">[0, 1]</td>
+                </tr>
+                <tr>
+                    <td colspan="1" port="cdir__a_0_0_b_0_0">[0, 0]</td>
+                    <td colspan="1" port="cdir__a_0_0_b_1_1">[1, 1]</td>
+                </tr>
+            </table>
+        >]
+    }
+    "cnode__a_0_0_b_0_0" [label="c-node", color=darkolivegreen3, fillcolor=darkolivegreen3, style=filled, shape=circle, fixedsize=true, width=0.8]
+    "lnode__a_0_0_b_0_0" [label="l-node", fillcolor=black, style=filled, fontcolor=white, shape=circle, fixedsize=true, width=0.8]
+    "lnode__a_0_0_b_0_0_subs" [label=<\{S<sub>1</sub>, S<sub>3</sub>\}>, color=lightblue1, fillcolor=lightblue1, style=filled, shape=record]
+    "cnode__a_0_0_b_1_1" [label="c-node", color=darkolivegreen3, fillcolor=darkolivegreen3, style=filled, shape=circle, fixedsize=true, width=0.8]
+    "lnode__a_0_0_b_1_1" [label="l-node", fillcolor=black, style=filled, fontcolor=white, shape=circle, fixedsize=true, width=0.8]
+    "lnode__a_0_0_b_1_1_subs" [label=<\{S<sub>4</sub>, S<sub>5</sub>\}>, color=lightblue1, fillcolor=lightblue1, style=filled, shape=record]
+    "cnode_root" -> "lnode_"
+    "cnode_root" -> "pnode__a" [lhead="clusterpdir_"]
+    "pnode__a" -> "pnode__a_fake"
+    "pnode__a_fake" -> "cdir__a_0_0" [lhead="clustercdir__a_0_0"]
+    cdir__a_0_0:cdir__a_0_0 -> "cnode__a_0_0"
+    "cnode__a_0_0" -> "lnode__a_0_0"
+    "lnode__a_0_0" -> "lnode__a_0_0_subs"
+    "cnode__a_0_0" -> "pnode__a_0_0_b" [lhead="clusterpdir__a_0_0"]
+    "pnode__a_0_0_b" -> "pnode__a_0_0_b_fake"
+    "pnode__a_0_0_b_fake" -> "cdir__a_0_0_b_0_1" [lhead="clustercdir__a_0_0_b_0_1"]
+    cdir__a_0_0_b_0_1:cdir__a_0_0_b_0_0 -> "cnode__a_0_0_b_0_0"
+    "cnode__a_0_0_b_0_0" -> "lnode__a_0_0_b_0_0"
+    "lnode__a_0_0_b_0_0" -> "lnode__a_0_0_b_0_0_subs"
+    cdir__a_0_0_b_0_1:cdir__a_0_0_b_1_1 -> "cnode__a_0_0_b_1_1"
+    "cnode__a_0_0_b_1_1" -> "lnode__a_0_0_b_1_1"
+    "lnode__a_0_0_b_1_1" -> "lnode__a_0_0_b_1_1_subs"
+    { rank=same; "pnode__a_fake" }
+    { rank=same; "cnode__a_0_0" }
+    { rank=same; "pnode__a_0_0_b_fake" }
+    { rank=same; "cnode__a_0_0_b_0_0""cnode__a_0_0_b_1_1" }
+}
