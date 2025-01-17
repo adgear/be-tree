@@ -600,7 +600,6 @@ static bool match_bool_expr_err(const struct betree_variable** preds,
         }
         case AST_BOOL_NOT: {
             bool result = match_node_inner_err(preds, bool_expr.unary.expr, memoize, report, last_reason, memoize_table);
-            printf("variable_name : %s\n", last_reason);
             return !result;
         }
         case AST_BOOL_VARIABLE: {
