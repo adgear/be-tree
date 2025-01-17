@@ -5,38 +5,25 @@
  * Uses dynamic addressing with linear probing.
  */
 
-#include <stdlib.h>
-#include <assert.h>
-#include <string.h>
 #include "hashtable.h"
-
-#ifdef NIF
-#include <erl_nif.h>
-#define bmalloc enif_alloc
-#define bcalloc enif_calloc
-#define brealloc enif_realloc
-#define bfree enif_free
-void* enif_calloc(size_t size);
-#else
-#define bmalloc malloc
-#define bcalloc(x,y) calloc(x,y)
-#define brealloc realloc
-#define bfree free
-#endif
+#include "alloc.h"
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
 
 /*
  * Interface section used for `makeheaders`.
  */
 #if INTERFACE
 struct hashtable_entry {
-	char* key;
-	void* value;
+    char* key;
+    void* value;
 };
 
 struct hashtable {
-	unsigned int size;
-	unsigned int capacity;
-	hashtable_entry* body;
+    unsigned int size;
+    unsigned int capacity;
+    hashtable_entry* body;
 };
 #endif
 
@@ -48,11 +35,10 @@ struct hashtable {
  */
 unsigned long hashtable_hash(char* str)
 {
-	unsigned long hash = 5381;
-	int c;
-	while ((c = *str++))
-		hash = ((hash << 5) + hash) + c;  /* hash * 33 + c */
-	return hash;
+    unsigned long hash = 5381;
+    int c;
+    while((c = *str++)) hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+    return hash;
 }
 
 /**
@@ -60,11 +46,11 @@ unsigned long hashtable_hash(char* str)
  */
 unsigned int hashtable_find_slot(hashtable* t, char* key)
 {
-	int index = hashtable_hash(key) % t->capacity;
-	while (t->body[index].key != NULL && strcmp(t->body[index].key, key) != 0) {
-		index = (index + 1) % t->capacity;
-	}
-	return index;
+    int index = hashtable_hash(key) % t->capacity;
+    while(t->body[index].key != NULL && strcmp(t->body[index].key, key) != 0) {
+        index = (index + 1) % t->capacity;
+    }
+    return index;
 }
 
 /**
@@ -72,12 +58,13 @@ unsigned int hashtable_find_slot(hashtable* t, char* key)
  */
 void* hashtable_get(hashtable* t, char* key)
 {
-	int index = hashtable_find_slot(t, key);
-	if (t->body[index].key != NULL) {
-		return t->body[index].value;
-	} else {
-		return NULL;
-	}
+    int index = hashtable_find_slot(t, key);
+    if(t->body[index].key != NULL) {
+        return t->body[index].value;
+    }
+    else {
+        return NULL;
+    }
 }
 
 /**
@@ -85,21 +72,22 @@ void* hashtable_get(hashtable* t, char* key)
  */
 void hashtable_set(hashtable* t, char* key, void* value)
 {
-	int index = hashtable_find_slot(t, key);
-	if (t->body[index].key != NULL) {
-		/* Entry exists; update it. */
-		t->body[index].value = value;
-	} else {
-		t->size++;
-		/* Create a new  entry */
-		if ((float)t->size / t->capacity > 0.8) {
-			/* Resize the hash table */
-			hashtable_resize(t, t->capacity * 2);
-			index = hashtable_find_slot(t, key);
-		}
-		t->body[index].key = key;
-		t->body[index].value = value;
-	}
+    int index = hashtable_find_slot(t, key);
+    if(t->body[index].key != NULL) {
+        /* Entry exists; update it. */
+        t->body[index].value = value;
+    }
+    else {
+        t->size++;
+        /* Create a new  entry */
+        if((float)t->size / t->capacity > 0.8) {
+            /* Resize the hash table */
+            hashtable_resize(t, t->capacity * 2);
+            index = hashtable_find_slot(t, key);
+        }
+        t->body[index].key = key;
+        t->body[index].value = value;
+    }
 }
 
 /**
@@ -107,12 +95,12 @@ void hashtable_set(hashtable* t, char* key, void* value)
  */
 void hashtable_remove(hashtable* t, char* key)
 {
-	int index = hashtable_find_slot(t, key);
-	if (t->body[index].key != NULL) {
-		t->body[index].key = NULL;
-		t->body[index].value = NULL;
-		t->size--;
-	}
+    int index = hashtable_find_slot(t, key);
+    if(t->body[index].key != NULL) {
+        t->body[index].key = NULL;
+        t->body[index].value = NULL;
+        t->size--;
+    }
 }
 
 /**
@@ -120,11 +108,11 @@ void hashtable_remove(hashtable* t, char* key)
  */
 hashtable* hashtable_create()
 {
-	hashtable* new_ht = bmalloc(sizeof(hashtable));
-	new_ht->size = 0;
-	new_ht->capacity = HASHTABLE_INITIAL_CAPACITY;
-	new_ht->body = hashtable_body_allocate(new_ht->capacity);
-	return new_ht;
+    hashtable* new_ht = bmalloc(sizeof(hashtable));
+    new_ht->size = 0;
+    new_ht->capacity = HASHTABLE_INITIAL_CAPACITY;
+    new_ht->body = hashtable_body_allocate(new_ht->capacity);
+    return new_ht;
 }
 
 /**
@@ -132,8 +120,8 @@ hashtable* hashtable_create()
  */
 hashtable_entry* hashtable_body_allocate(unsigned int capacity)
 {
-	// bcalloc fills the allocated memory with zeroes
-	return (hashtable_entry*)bcalloc(capacity, sizeof(hashtable_entry));
+    // bcalloc fills the allocated memory with zeroes
+    return (hashtable_entry*)bcalloc(capacity * sizeof(hashtable_entry));
 }
 
 /**
@@ -141,18 +129,18 @@ hashtable_entry* hashtable_body_allocate(unsigned int capacity)
  */
 void hashtable_resize(hashtable* t, unsigned int capacity)
 {
-	assert(capacity >= t->size);
-	unsigned int old_capacity = t->capacity;
-	hashtable_entry* old_body = t->body;
-	t->body = hashtable_body_allocate(capacity);
-	t->capacity = capacity;
+    assert(capacity >= t->size);
+    unsigned int old_capacity = t->capacity;
+    hashtable_entry* old_body = t->body;
+    t->body = hashtable_body_allocate(capacity);
+    t->capacity = capacity;
 
-	// Copy all the old values into the newly allocated body
-	for (int i = 0; i < old_capacity; i++) {
-		if (old_body[i].key != NULL) {
-			hashtable_set(t, old_body[i].key, old_body[i].value);
-		}
-	}
+    // Copy all the old values into the newly allocated body
+    for(int i = 0; i < old_capacity; i++) {
+        if(old_body[i].key != NULL) {
+            hashtable_set(t, old_body[i].key, old_body[i].value);
+        }
+    }
 }
 
 /**
@@ -160,6 +148,6 @@ void hashtable_resize(hashtable* t, unsigned int capacity)
  */
 void hashtable_destroy(hashtable* t)
 {
-	bfree(t->body);
-	bfree(t);
+    bfree(t->body);
+    bfree(t);
 }
