@@ -392,10 +392,10 @@ static bool match_set_expr_err(const struct betree_variable** preds, const struc
     struct set_right_value right = set_expr.right_value;
     bool is_in;
 
-    char* variable_name = set_expr.left_value.variable_value.attr;
-    set_reason_sub_id_list(last_reason, variable_name);
     if(left.value_type == AST_SET_LEFT_VALUE_INTEGER
         && right.value_type == AST_SET_RIGHT_VALUE_VARIABLE) {
+        char* variable_name = set_expr.right_value.variable_value.attr;
+        set_reason_sub_id_list(last_reason, variable_name);
         struct betree_integer_list* variable;
         bool is_variable_defined = get_integer_list_var(right.variable_value.var, preds, &variable);
         if(is_variable_defined == false) {
@@ -405,6 +405,8 @@ static bool match_set_expr_err(const struct betree_variable** preds, const struc
     }
     else if(left.value_type == AST_SET_LEFT_VALUE_STRING
         && right.value_type == AST_SET_RIGHT_VALUE_VARIABLE) {
+        char* variable_name = set_expr.right_value.variable_value.attr;
+        set_reason_sub_id_list(last_reason, variable_name);
         struct betree_string_list* variable;
         bool is_variable_defined = get_string_list_var(right.variable_value.var, preds, &variable);
         if(is_variable_defined == false) {
@@ -414,6 +416,8 @@ static bool match_set_expr_err(const struct betree_variable** preds, const struc
     }
     else if(left.value_type == AST_SET_LEFT_VALUE_VARIABLE
         && right.value_type == AST_SET_RIGHT_VALUE_INTEGER_LIST) {
+        char* variable_name = set_expr.left_value.variable_value.attr;
+        set_reason_sub_id_list(last_reason, variable_name);
         int64_t variable;
         bool is_variable_defined = get_integer_var(left.variable_value.var, preds, &variable);
         if(is_variable_defined == false) {
@@ -423,6 +427,8 @@ static bool match_set_expr_err(const struct betree_variable** preds, const struc
     }
     else if(left.value_type == AST_SET_LEFT_VALUE_VARIABLE
         && right.value_type == AST_SET_RIGHT_VALUE_STRING_LIST) {
+        char* variable_name = set_expr.left_value.variable_value.attr;
+        set_reason_sub_id_list(last_reason, variable_name);
         struct string_value variable;
         bool is_variable_defined = get_string_var(left.variable_value.var, preds, &variable);
         if(is_variable_defined == false) {

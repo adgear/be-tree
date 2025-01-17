@@ -16,8 +16,6 @@
 #include "tree_err.h"
 #include "utils.h"
 
-#define DEBUG 1
-
 enum ATTR_DOMAIN_POSITION {
     ATTR_BOOL = 0,
     ATTR_INT,
@@ -263,13 +261,13 @@ int test_segments_fail()
 
     make_attr_domains(tree, ATTR_CONFIG_2(ATTR_INT64, ATTR_SEGMENTS));
 
-    const char* exprs[] = { "segment_within(1, 10)" };
+    const char* exprs[] = { "segment_within(seg, 1, 10)" };
     const size_t exprs_count = 1;
     betree_bulk_insert(tree, exprs, exprs_count);
 
     betree_make_sub_ids(tree);
     const char* event
-        = "{\"now\": 30, \"seg\": [[1, 10000000]], \"segments_with_timestamp\": [[1, 10000000]]}";
+        = "{\"now\": 30, \"seg\": [[1, 10000000]]}";
     struct report_err* report = make_report_err();
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
@@ -278,10 +276,8 @@ int test_segments_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
     mu_assert(
-        ((arraylist*)hashtable_get(report->reason_sub_id_list, "segments_with_timestamp"))->body[0]
-            == 1,
-        "goodReason");
-
+        ((arraylist*)hashtable_get(report->reason_sub_id_list, "seg"))->body[0] == 1, "goodReason");
+    
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
     free_report_err(report);
@@ -613,8 +609,6 @@ void make_attr_domains_undefined(struct betree_err* tree, size_t config, size_t 
         add_attr_domain_sl(tree->config, "sl", ((1 << ATTR_STR_LIST) & config_undefined));
     if((1 << ATTR_SEGMENTS) & config) {
         add_attr_domain_segments(tree->config, "seg", ((1 << ATTR_SEGMENTS) & config_undefined));
-        add_attr_domain_segments(
-            tree->config, "segments_with_timestamp", ((1 << ATTR_SEGMENTS) & config_undefined));
     }
     if((1 << ATTR_GEO) & config) {
         add_attr_domain_f(tree->config, "latitude", ((1 << ATTR_GEO) & config_undefined));
@@ -651,8 +645,8 @@ void betree_bulk_insert_with_constants(struct betree_err* tree,
 #if defined(DEBUG)
         fprintf(stderr, "betree_insert exprs[%d] ... %s\n", idx, exprs[i]);
 #endif
-        mu_assert(
-            betree_insert_with_constants_err(tree, idx, constants_count, constants, exprs[i]), "");
+        struct betree_sub* sub = betree_make_sub_err(tree, idx, constants_count, constants, exprs[i]);
+        betree_insert_sub_err(tree, sub);
     }
 }
 

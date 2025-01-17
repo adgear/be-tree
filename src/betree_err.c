@@ -586,7 +586,7 @@ static bool betree_search_with_event_filled_err(
         = make_environment(betree->config->attr_domain_count, event);
     if(validate_variables(betree->config, variables) == false) {
         fprintf(stderr, "Failed to validate event\n");
-        set_reason_sub_id_lists(report->reason_sub_id_list, betree->sub_ids, "invalid_event");
+        set_reason_sub_id_lists(report, "invalid_event", betree->sub_ids);
         return false;
     }
     return betree_search_with_preds_err(betree->config, variables, betree->cnode, report);
@@ -602,7 +602,7 @@ bool betree_search_with_event_filled_ids_err(const struct betree_err* betree,
         = make_environment(betree->config->attr_domain_count, event);
     if(validate_variables(betree->config, variables) == false) {
         fprintf(stderr, "Failed to validate event\n");
-        set_reason_sub_id_lists(report->reason_sub_id_list, betree->sub_ids, "invalid_event");
+        set_reason_sub_id_lists(report, "invalid_event", betree->sub_ids);
         return false;
     }
     return betree_search_with_preds_ids_err(
