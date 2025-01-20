@@ -266,8 +266,7 @@ int test_segments_fail()
     betree_bulk_insert(tree, exprs, exprs_count);
 
     betree_make_sub_ids(tree);
-    const char* event
-        = "{\"now\": 30, \"seg\": [[1, 10000000]]}";
+    const char* event = "{\"now\": 30, \"seg\": [[1, 10000000]]}";
     struct report_err* report = make_report_err();
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
@@ -277,7 +276,7 @@ int test_segments_fail()
     mu_assert(report->matched == 0, "goodEvent");
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "seg"))->body[0] == 1, "goodReason");
-    
+
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
     free_report_err(report);
@@ -568,15 +567,89 @@ int test_all_search_term()
     betree_make_sub_ids(tree);
 
     const char* event = "{\"b\": true, \"i\": 10, \"f\": 3.14, \"s\": \"good\", \"il\": [1,2,3], "
-                        "\"sl\": [\"bad\"], \"seg\": [[1, 10000000]], \"frequency_caps\": "
-                        "[[\"flight\", 10, \"ns\", 0, 0]], \"now\": 0}";
+                        "\"sl\": [\"bad\"], \"seg\": [[1, 20000001]], \"frequency_caps\": "
+                        "[[\"flight\", 10, \"ns\", 0, 0]], \"now\": 100}";
     struct report_err* report = make_report_err();
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     betree_search_err(tree, event, report);
 
-    mu_assert(report->matched == 2, "goodEvent");
+    mu_assert(report->matched == 0, "goodEvent");
+    const int expected_set[] = { 1, 2 };
+    int found_total = 0;
+    for(size_t j = 0; j < 2; j++) {
+        for(size_t k = 0; k < 2; k++) {
+            found_total += (((arraylist*)hashtable_get(report->reason_sub_id_list, "seg"))->body[k]
+                               == expected_set[j])
+                ? 1
+                : 0;
+        }
+    }
+    mu_assert(found_total == 2, "goodReason");
+
+    free_report_err(report);
+    betree_free_err(tree);
+#if defined(DEBUG)
+    fprintf(stderr, "\n");
+#endif
+    return 0;
+}
+
+
+int test_event_search_reason()
+{
+    struct betree_err* tree = betree_make_err();
+
+    make_attr_domains(tree, ATTR_CONFIG_4(ATTR_BOOL, ATTR_INT, ATTR_FLOAT, ATTR_STR));
+
+    const char* exprs[] = {
+        "b and i = 10 and f < 3.13 and s = \"good\"",
+        "b and i = 10 and f > 3.13 and s = \"bad\"",
+        "b and i = 10 and f < 3.13 and s = \"good\"",
+        "not b and i = 11 and f > 3.13 and s = \"bad\"",
+        "not b and i = 11 and f < 3.13 and s = \"good\"",
+        "not b and i = 11 and f > 3.13 and s = \"bad\"",
+        "not b and i = 11 and f < 3.13 and s = \"good\"",
+    };
+    const size_t exprs_count = 7;
+
+    betree_bulk_insert(tree, exprs, exprs_count);
+
+    betree_make_sub_ids(tree);
+
+    const char* event = "{\"b\": true, \"i\": 10, \"f\": 3.14, \"s\": \"cool\"}";
+
+    struct report_err* report = make_report_err();
+#if defined(DEBUG)
+    fprintf(stderr, "search ... %s\n", event);
+#endif
+    betree_search_err(tree, event, report);
+
+    mu_assert(report->matched == 0, "goodEvent");
+    const int expected_set1[] = { 1, 2, 3 };
+    int found_total1 = 0;
+    for(size_t j = 0; j < 3; j++) {
+        for(size_t k = 0; k < 3; k++) {
+            found_total1 += (((arraylist*)hashtable_get(report->reason_sub_id_list, "s"))->body[k]
+                                == expected_set1[j])
+                ? 1
+                : 0;
+        }
+    }
+    mu_assert(found_total1 == 3, "goodReason");
+
+    const int expected_set2[] = { 4, 5, 6, 7 };
+    int found_total2 = 0;
+    for(size_t j = 0; j < 4; j++) {
+        for(size_t k = 0; k < 4; k++) {
+            found_total2 += (((arraylist*)hashtable_get(report->reason_sub_id_list, "b"))->body[k]
+                                == expected_set2[j])
+                ? 1
+                : 0;
+        }
+    }
+    mu_assert(found_total2 == 4, "goodReason");
 
     free_report_err(report);
     betree_free_err(tree);
@@ -645,7 +718,8 @@ void betree_bulk_insert_with_constants(struct betree_err* tree,
 #if defined(DEBUG)
         fprintf(stderr, "betree_insert exprs[%d] ... %s\n", idx, exprs[i]);
 #endif
-        struct betree_sub* sub = betree_make_sub_err(tree, idx, constants_count, constants, exprs[i]);
+        struct betree_sub* sub
+            = betree_make_sub_err(tree, idx, constants_count, constants, exprs[i]);
         betree_insert_sub_err(tree, sub);
     }
 }
@@ -671,6 +745,8 @@ int all_tests()
     mu_run_test(test_memoize_fail);
 
     mu_run_test(test_all_search_term);
+
+    mu_run_test(test_event_search_reason);
 
     return 0;
 }
