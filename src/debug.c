@@ -795,4 +795,5 @@ void write_dot_file(const struct betree* tree)
         abort();
     }
     wrt_dot_to_file(tree, f);
+    fclose(f);
 }

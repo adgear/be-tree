@@ -141,6 +141,8 @@ void hashtable_resize(hashtable* t, unsigned int capacity)
             hashtable_set(t, old_body[i].key, old_body[i].value);
         }
     }
+
+    bfree(old_body);
 }
 
 /**

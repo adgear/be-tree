@@ -51,7 +51,8 @@ static const char* get_path_pnode(const struct config* config, const struct pnod
     return name;
 }
 
-static const char* get_path_cdir(const struct config* config, const struct cdir_err* cdir, bool first)
+static const char* get_path_cdir(
+    const struct config* config, const struct cdir_err* cdir, bool first)
 {
     const char* parent_path = NULL;
     switch(cdir->parent_type) {
@@ -346,7 +347,8 @@ static size_t depth_of_cdir(const struct cdir_err* cdir)
         return 0;
     }
     size_t current = 1;
-    const struct cdir_err* parent = cdir->parent_type == CNODE_PARENT_CDIR ? cdir->cdir_parent : NULL;
+    const struct cdir_err* parent
+        = cdir->parent_type == CNODE_PARENT_CDIR ? cdir->cdir_parent : NULL;
     while(parent != NULL) {
         current++;
         if(parent->parent_type == CNODE_PARENT_PNODE) {
@@ -722,4 +724,5 @@ void write_dot_file_err(const struct betree_err* tree)
         abort();
     }
     wrt_dot_to_file_err(tree, f);
+    fclose(f);
 }

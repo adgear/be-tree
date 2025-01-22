@@ -680,7 +680,7 @@ void free_report_err(struct report_err* report)
             arraylist_destroy((arraylist*)report->reason_sub_id_list->body[i].value);
         }
     }
-    bfree(report->reason_sub_id_list);
+    hashtable_destroy(report->reason_sub_id_list);
     bfree(report->subs);
     bfree(report);
 }

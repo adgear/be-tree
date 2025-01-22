@@ -167,5 +167,6 @@ tidy:
 
 build-test-benchmark: build/libbetree.a
 	gcc -o testbenchmark tests/real_tests.c -Isrc -I/usr/include -I/usr/local/include  build/libbetree.a  $(LDFLAGS_TESTS)
+	gcc -o testbenchmark_err tests/real_tests_err.c -Isrc -I/usr/include -I/usr/local/include  build/libbetree.a  $(LDFLAGS_TESTS)
 
 .PHONY: clean realclean test valgrind
