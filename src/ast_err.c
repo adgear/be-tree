@@ -9,6 +9,7 @@
 #include "alloc.h"
 #include "ast.h"
 #include "betree.h"
+#include "betree_err.h"
 #include "error.h"
 #include "hashmap.h"
 #include "memoize.h"
@@ -17,7 +18,6 @@
 #include "utils.h"
 #include "value.h"
 #include "var.h"
-#include "betree_err.h"
 
 static bool match_not_all_of_string(struct value variable, struct ast_list_expr list_expr)
 {
@@ -116,7 +116,8 @@ static bool match_all_of_int(struct value variable, struct ast_list_expr list_ex
             from = next_low(ys, from, y_count, x);
             if(from < y_count && ys[from] == x) {
                 j++;
-            } else {
+            }
+            else {
                 return false;
             }
         }
@@ -158,10 +159,7 @@ static bool match_all_of_string(struct value variable, struct ast_list_expr list
     return false;
 }
 
-static void set_reason_sub_id_list(
-    char* last_reason,
-    const char* variable_name
-)
+void set_reason_sub_id_list(char* last_reason, const char* variable_name)
 {
     sprintf(last_reason, "%s", variable_name);
 }
@@ -173,8 +171,9 @@ static bool match_node_inner_err(const struct betree_variable** preds,
     char* last_reason,
     hashtable* memoize_table);
 
-static bool match_special_expr_err(
-    const struct betree_variable** preds, const struct ast_special_expr special_expr, char* last_reason)
+static bool match_special_expr_err(const struct betree_variable** preds,
+    const struct ast_special_expr special_expr,
+    char* last_reason)
 {
     switch(special_expr.type) {
         case AST_SPECIAL_FREQUENCY: {
@@ -185,7 +184,7 @@ static bool match_special_expr_err(
                     bool is_caps_defined = get_frequency_var(f->attr_var.var, preds, &caps);
                     char* variable_name = special_expr.frequency.attr_var.attr;
                     set_reason_sub_id_list(last_reason, variable_name);
-                    
+
                     if(is_caps_defined == false) {
                         return false;
                     }
@@ -201,7 +200,8 @@ static bool match_special_expr_err(
                     return within_frequency_caps(
                         caps, f->type, f->id, f->ns, f->value, f->length, now);
                 }
-                default: abort();
+                default:
+                    abort();
             }
         }
         case AST_SPECIAL_SEGMENT: {
@@ -223,7 +223,8 @@ static bool match_special_expr_err(
                     return segment_within(s->segment_id, s->seconds, segments, now);
                 case AST_SPECIAL_SEGMENTBEFORE:
                     return segment_before(s->segment_id, s->seconds, segments, now);
-                default: abort();
+                default:
+                    abort();
             }
         }
         case AST_SPECIAL_GEO: {
@@ -243,7 +244,8 @@ static bool match_special_expr_err(
                     return geo_within_radius(
                         g->latitude, g->longitude, latitude_var, longitude_var, g->radius);
                 }
-                default: abort();
+                default:
+                    abort();
             }
             return false;
         }
@@ -263,11 +265,13 @@ static bool match_special_expr_err(
                     return starts_with(value.string, s->pattern);
                 case AST_SPECIAL_ENDSWITH:
                     return ends_with(value.string, s->pattern);
-                default: abort();
+                default:
+                    abort();
             }
             return false;
         }
-        default: abort();
+        default:
+            abort();
     }
 }
 
@@ -287,7 +291,8 @@ static bool match_is_null_expr_err(const struct betree_variable** preds,
             return is_variable_defined;
         case AST_IS_EMPTY:
             return is_variable_defined && is_empty_list(variable);
-        default: abort();
+        default:
+            abort();
     }
 }
 
@@ -316,7 +321,8 @@ static bool match_not_all_of_int(struct value variable, struct ast_list_expr lis
         // first check that new index is in array
         if(from < y_count && ys[from] == x) {
             return true;
-        } else {
+        }
+        else {
             i++;
         }
     }
@@ -345,14 +351,15 @@ static bool match_list_expr_err(
         case AST_LIST_NONE_OF: {
             bool result = false;
             switch(list_expr.value.value_type) {
-                case AST_LIST_VALUE_INTEGER_LIST: 
+                case AST_LIST_VALUE_INTEGER_LIST:
                     result = match_not_all_of_int(variable, list_expr);
                     break;
                 case AST_LIST_VALUE_STRING_LIST: {
                     result = match_not_all_of_string(variable, list_expr);
                     break;
                 }
-                default: abort();
+                default:
+                    abort();
             }
             switch(list_expr.op) {
                 case AST_LIST_ONE_OF:
@@ -362,31 +369,33 @@ static bool match_list_expr_err(
                 case AST_LIST_ALL_OF:
                     invalid_expr("Should never happen");
                     return false;
-                default: abort();
+                default:
+                    abort();
             }
         }
         case AST_LIST_ALL_OF: {
             switch(list_expr.value.value_type) {
                 case AST_LIST_VALUE_INTEGER_LIST:
-                    if(match_all_of_int(variable, list_expr) == false)
-                    {
+                    if(match_all_of_int(variable, list_expr) == false) {
                         set_reason_sub_id_list(last_reason, variable_name);
                     }
                     return match_all_of_int(variable, list_expr);
                 case AST_LIST_VALUE_STRING_LIST:
-                    if(match_all_of_string(variable, list_expr) == false)
-                    {
+                    if(match_all_of_string(variable, list_expr) == false) {
                         set_reason_sub_id_list(last_reason, variable_name);
                     }
                     return match_all_of_string(variable, list_expr);
-                default: abort();
+                default:
+                    abort();
             }
         }
-        default: abort();
+        default:
+            abort();
     }
 }
 
-static bool match_set_expr_err(const struct betree_variable** preds, const struct ast_set_expr set_expr, char* last_reason)
+static bool match_set_expr_err(
+    const struct betree_variable** preds, const struct ast_set_expr set_expr, char* last_reason)
 {
     struct set_left_value left = set_expr.left_value;
     struct set_right_value right = set_expr.right_value;
@@ -447,12 +456,14 @@ static bool match_set_expr_err(const struct betree_variable** preds, const struc
         case AST_SET_IN: {
             return is_in;
         }
-        default: abort();
+        default:
+            abort();
     }
 }
 
-static bool match_compare_expr_err(
-    const struct betree_variable** preds, const struct ast_compare_expr compare_expr, char* last_reason)
+static bool match_compare_expr_err(const struct betree_variable** preds,
+    const struct ast_compare_expr compare_expr,
+    char* last_reason)
 {
     char* variable_name = compare_expr.attr_var.attr;
     set_reason_sub_id_list(last_reason, variable_name);
@@ -472,7 +483,8 @@ static bool match_compare_expr_err(
                     bool result = variable.float_value < compare_expr.value.float_value;
                     return result;
                 }
-                default: abort();
+                default:
+                    abort();
             }
         }
         case AST_COMPARE_LE: {
@@ -485,7 +497,8 @@ static bool match_compare_expr_err(
                     bool result = variable.float_value <= compare_expr.value.float_value;
                     return result;
                 }
-                default: abort();
+                default:
+                    abort();
             }
         }
         case AST_COMPARE_GT: {
@@ -498,7 +511,8 @@ static bool match_compare_expr_err(
                     bool result = variable.float_value > compare_expr.value.float_value;
                     return result;
                 }
-                default: abort();
+                default:
+                    abort();
             }
         }
         case AST_COMPARE_GE: {
@@ -511,15 +525,18 @@ static bool match_compare_expr_err(
                     bool result = variable.float_value >= compare_expr.value.float_value;
                     return result;
                 }
-                default: abort();
+                default:
+                    abort();
             }
         }
-        default: abort();
+        default:
+            abort();
     }
 }
 
-static bool match_equality_expr_err(
-    const struct betree_variable** preds, const struct ast_equality_expr equality_expr, char* last_reason)
+static bool match_equality_expr_err(const struct betree_variable** preds,
+    const struct ast_equality_expr equality_expr,
+    char* last_reason)
 {
     struct value variable;
     char* variable_name = equality_expr.attr_var.attr;
@@ -541,14 +558,15 @@ static bool match_equality_expr_err(
                 }
                 case AST_EQUALITY_VALUE_STRING: {
                     bool result = variable.string_value.str == equality_expr.value.string_value.str;
-                    if(result == false)
-                    return result;
+                    if(result == false) return result;
                 }
                 case AST_EQUALITY_VALUE_INTEGER_ENUM: {
-                    bool result = variable.integer_enum_value.ienum == equality_expr.value.integer_enum_value.ienum;
+                    bool result = variable.integer_enum_value.ienum
+                        == equality_expr.value.integer_enum_value.ienum;
                     return result;
                 }
-                default: abort();
+                default:
+                    abort();
             }
         }
         case AST_EQUALITY_NE: {
@@ -566,13 +584,16 @@ static bool match_equality_expr_err(
                     return result;
                 }
                 case AST_EQUALITY_VALUE_INTEGER_ENUM: {
-                    bool result = variable.integer_enum_value.ienum != equality_expr.value.integer_enum_value.ienum;
+                    bool result = variable.integer_enum_value.ienum
+                        != equality_expr.value.integer_enum_value.ienum;
                     return result;
                 }
-                default: abort();
+                default:
+                    abort();
             }
         }
-        default: abort();
+        default:
+            abort();
     }
 }
 
@@ -589,23 +610,28 @@ static bool match_bool_expr_err(const struct betree_variable** preds,
         case AST_BOOL_LITERAL:
             return bool_expr.literal;
         case AST_BOOL_AND: {
-            bool lhs = match_node_inner_err(preds, bool_expr.binary.lhs, memoize, report, last_reason, memoize_table);
+            bool lhs = match_node_inner_err(
+                preds, bool_expr.binary.lhs, memoize, report, last_reason, memoize_table);
             if(lhs == false) {
                 return false;
             }
-            bool rhs = match_node_inner_err(preds, bool_expr.binary.rhs, memoize, report, last_reason, memoize_table);
+            bool rhs = match_node_inner_err(
+                preds, bool_expr.binary.rhs, memoize, report, last_reason, memoize_table);
             return rhs;
         }
         case AST_BOOL_OR: {
-            bool lhs = match_node_inner_err(preds, bool_expr.binary.lhs, memoize, report, last_reason, memoize_table);
+            bool lhs = match_node_inner_err(
+                preds, bool_expr.binary.lhs, memoize, report, last_reason, memoize_table);
             if(lhs == true) {
                 return true;
             }
-            bool rhs = match_node_inner_err(preds, bool_expr.binary.rhs, memoize, report, last_reason, memoize_table);
+            bool rhs = match_node_inner_err(
+                preds, bool_expr.binary.rhs, memoize, report, last_reason, memoize_table);
             return rhs;
         }
         case AST_BOOL_NOT: {
-            bool result = match_node_inner_err(preds, bool_expr.unary.expr, memoize, report, last_reason, memoize_table);
+            bool result = match_node_inner_err(
+                preds, bool_expr.unary.expr, memoize, report, last_reason, memoize_table);
             return !result;
         }
         case AST_BOOL_VARIABLE: {
@@ -618,7 +644,8 @@ static bool match_bool_expr_err(const struct betree_variable** preds,
             }
             return value;
         }
-        default: abort();
+        default:
+            abort();
     }
 }
 
@@ -657,7 +684,8 @@ static bool match_node_inner_err(const struct betree_variable** preds,
             break;
         }
         case AST_TYPE_BOOL_EXPR: {
-            result = match_bool_expr_err(preds, node->bool_expr, memoize, report, last_reason, memoize_table);
+            result = match_bool_expr_err(
+                preds, node->bool_expr, memoize, report, last_reason, memoize_table);
             break;
         }
         case AST_TYPE_LIST_EXPR: {
@@ -676,7 +704,8 @@ static bool match_node_inner_err(const struct betree_variable** preds,
             result = match_equality_expr_err(preds, node->equality_expr, last_reason);
             break;
         }
-        default: abort();
+        default:
+            abort();
     }
     if(node->memoize_id != INVALID_PRED) {
         char memoize_id_c[23];
@@ -688,7 +717,6 @@ static bool match_node_inner_err(const struct betree_variable** preds,
         else {
             set_bit(memoize->fail, node->memoize_id);
             hashtable_set(memoize_table, bstrdup(memoize_id_c), bstrdup(last_reason));
-
         }
     }
     return result;

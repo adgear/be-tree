@@ -53,12 +53,13 @@ static void add_reason_sub_id_list(
     betree_sub_t sub_id
 )
 {
-    if(hashtable_get(report->reason_sub_id_list, variable_name) == NULL)
+    arraylist* sub_id_list = NULL; 
+    if((sub_id_list = hashtable_get(report->reason_sub_id_list, variable_name)) == NULL)
     {
-        arraylist* sub_id_list = arraylist_create();
+        sub_id_list = arraylist_create();
         hashtable_set(report->reason_sub_id_list, bstrdup(variable_name), sub_id_list);
     }    
-    arraylist_add(hashtable_get(report->reason_sub_id_list, variable_name), sub_id);
+    arraylist_add(sub_id_list, sub_id);
 }
 
 void set_reason_sub_id_lists(
@@ -101,8 +102,7 @@ static void add_sub_to_eval(struct betree_sub* sub, struct subs_to_eval* subs)
 enum short_circuit_e { SHORT_CIRCUIT_PASS, SHORT_CIRCUIT_FAIL, SHORT_CIRCUIT_NONE };
 
 static enum short_circuit_e try_short_circuit_err(size_t attr_domains_count,
-    const struct short_circuit* short_circuit, const uint64_t* undefined, struct attr_domain** attr_domains,
-    struct report_err* report, betree_sub_t sub_id)
+    const struct short_circuit* short_circuit, const uint64_t* undefined, struct attr_domain** attr_domains, char* last_reason)
 {
     size_t count = attr_domains_count / 64 + 1;
     for(size_t i = 0; i < count; i++) {
@@ -115,7 +115,7 @@ static enum short_circuit_e try_short_circuit_err(size_t attr_domains_count,
             for (size_t j=0; j < attr_domains_count; j++)
             {
                 if((1<<(j%64) & short_circuit->fail[i]) && (1<<(j%64) & undefined[i])){
-                    add_reason_sub_id_list(report, attr_domains[j]->attr_var.attr, sub_id);
+                    set_reason_sub_id_list(last_reason, attr_domains[j]->attr_var.attr);
                     break;
                 }
             }
@@ -148,7 +148,7 @@ bool match_sub_err(size_t attr_domains_count,
     struct attr_domain** attr_domains,
     hashtable* memoize_table)
 {
-    enum short_circuit_e short_circuit = try_short_circuit_err(attr_domains_count, &sub->short_circuit, undefined, attr_domains, report, sub->id);
+    enum short_circuit_e short_circuit = try_short_circuit_err(attr_domains_count, &sub->short_circuit, undefined, attr_domains, last_reason);
     if(short_circuit != SHORT_CIRCUIT_NONE) {
         if(report != NULL) {
             report->shorted++;
@@ -161,7 +161,6 @@ bool match_sub_err(size_t attr_domains_count,
         }
     }
     bool result = match_node_err(preds, sub->expr, memoize, report, last_reason, memoize_table);
-
 
     return result;
 }
@@ -405,9 +404,9 @@ static void search_cdir_err(const struct attr_domain** attr_domains,
         if(cdir->rchild && cdir->rchild->sub_ids->size > 0) {
             const char* attr_name = find_pnode_attr_name(cdir);
             if(attr_name != NULL)
-                set_reason_sub_id_lists(report, attr_name, cdir->lchild->sub_ids);
+                set_reason_sub_id_lists(report, attr_name, cdir->rchild->sub_ids);
             else
-                set_reason_sub_id_lists(report, "no_reason", cdir->lchild->sub_ids);
+                set_reason_sub_id_lists(report, "no_reason", cdir->rchild->sub_ids);
         }
     }
 }
