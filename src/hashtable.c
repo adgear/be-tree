@@ -27,7 +27,7 @@ struct hashtable {
 };
 #endif
 
-#define HASHTABLE_INITIAL_CAPACITY 128
+#define HASHTABLE_INITIAL_CAPACITY 4
 
 /**
  * Compute the hash value for the given string.
