@@ -27,7 +27,7 @@ struct hashtable {
 };
 #endif
 
-#define HASHTABLE_INITIAL_CAPACITY 4
+#define HASHTABLE_INITIAL_CAPACITY 128
 
 /**
  * Compute the hash value for the given string.
@@ -136,7 +136,7 @@ void hashtable_resize(hashtable* t, unsigned int capacity)
     t->capacity = capacity;
 
     // Copy all the old values into the newly allocated body
-    for(int i = 0; i < old_capacity; i++) {
+    for(size_t i = 0; i < old_capacity; i++) {
         if(old_body[i].key != NULL) {
             hashtable_set(t, old_body[i].key, old_body[i].value);
         }
