@@ -588,7 +588,8 @@ static bool betree_search_with_event_filled_err(
     if(validate_variables(betree->config, variables) == false) {
         fprintf(stderr, "Failed to validate event\n");
 #if defined(USE_REASONLIST)
-        betree_var_t invalid_event = betree->config->attr_domain_count + REASON_INVALID_EVENT - 1;
+        betree_var_t invalid_event
+            = ADDITIONAL_REASON(betree->config->attr_domain_count, REASON_INVALID_EVENT);
         set_reason_sub_id_lists(report, invalid_event, betree->sub_ids);
 #else
         set_reason_sub_id_lists(report, "invalid_event", betree->sub_ids);
@@ -609,7 +610,8 @@ bool betree_search_with_event_filled_ids_err(const struct betree_err* betree,
     if(validate_variables(betree->config, variables) == false) {
         fprintf(stderr, "Failed to validate event\n");
 #if defined(USE_REASONLIST)
-        betree_var_t invalid_event = betree->config->attr_domain_count + REASON_INVALID_EVENT - 1;
+        betree_var_t invalid_event
+            = ADDITIONAL_REASON(betree->config->attr_domain_count, REASON_INVALID_EVENT);
         set_reason_sub_id_lists(report, invalid_event, betree->sub_ids);
 #else
         set_reason_sub_id_lists(report, "invalid_event", betree->sub_ids);
@@ -680,6 +682,7 @@ struct reason_map* make_reason_map(const struct betree_err* betree)
 
     betree_var_t idx_geo = ADDITIONAL_REASON(betree->config->attr_domain_count, REASON_GEO);
     map->reason[idx_geo] = bstrdup("geo");
+    /* no_reason is not in use for the time being */
     betree_var_t idx_unknown = ADDITIONAL_REASON(betree->config->attr_domain_count, REASON_UNKNOWN);
     map->reason[idx_unknown] = bstrdup("no_reason");
     betree_var_t idx_invalid_event

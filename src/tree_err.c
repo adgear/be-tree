@@ -21,11 +21,7 @@
 #include "tree_err.h"
 #include "utils.h"
 
-#if defined(USE_REASONLIST)
-static betree_var_t find_pnode_attr_name(struct cdir_err* cdir, bool* value_exists);
-#else
-static const char* find_pnode_attr_name(struct cdir_err* cdir);
-#endif
+static betree_var_t find_pnode_attr_name(struct cdir_err* cdir);
 
 static bool is_id_in(uint64_t id, const uint64_t* ids, size_t sz)
 {
@@ -84,7 +80,7 @@ void set_reason_sub_id_lists(struct report_err* report,
 {
     if(!sub_ids || sub_ids->size <= 0) return;
 #if defined(USE_REASONLIST)
-    if(sub_ids->size > 0) reasonlist_join(report->reason_sub_id_list, reason, sub_ids);
+    reasonlist_join(report->reason_sub_id_list, reason, sub_ids);
 #else
     if(variable_name == NULL) variable_name = "NULL";
     if(hashtable_get(report->reason_sub_id_list, variable_name) == NULL) {
@@ -495,7 +491,6 @@ static void search_cdir_err(
     struct report_err* report)
 {
 #if defined(USE_REASONLIST)
-    betree_var_t no_reason = config->attr_domain_count + REASON_UNKNOWN - 1;
     match_be_tree_err(config, preds, cdir->cnode, subs, report);
 #else
     match_be_tree_err(attr_domains, preds, cdir->cnode, subs, report);
@@ -510,12 +505,8 @@ static void search_cdir_err(
     else {
         if(cdir->lchild && cdir->lchild->sub_ids->size > 0) {
 #if defined(USE_REASONLIST)
-            bool value_exists = false;
-            betree_var_t attr_var = find_pnode_attr_name(cdir, &value_exists);
-            if(value_exists)
-                reasonlist_join(report->reason_sub_id_list, attr_var, cdir->lchild->sub_ids);
-            else
-                reasonlist_join(report->reason_sub_id_list, no_reason, cdir->lchild->sub_ids);
+            betree_var_t attr_var = find_pnode_attr_name(cdir);
+            reasonlist_join(report->reason_sub_id_list, attr_var, cdir->lchild->sub_ids);
 #else
             const char* attr_name = find_pnode_attr_name(cdir);
             if(attr_name != NULL)
@@ -535,12 +526,8 @@ static void search_cdir_err(
     else {
         if(cdir->rchild && cdir->rchild->sub_ids->size > 0) {
 #if defined(USE_REASONLIST)
-            bool value_exists = false;
-            betree_var_t attr_var = find_pnode_attr_name(cdir, &value_exists);
-            if(value_exists)
-                reasonlist_join(report->reason_sub_id_list, attr_var, cdir->rchild->sub_ids);
-            else
-                reasonlist_join(report->reason_sub_id_list, no_reason, cdir->rchild->sub_ids);
+            betree_var_t attr_var = find_pnode_attr_name(cdir);
+            reasonlist_join(report->reason_sub_id_list, attr_var, cdir->rchild->sub_ids);
 #else
             const char* attr_name = find_pnode_attr_name(cdir);
             if(attr_name != NULL)
@@ -568,7 +555,6 @@ static void search_cdir_ids_err(
     struct report_err* report)
 {
 #if defined(USE_REASONLIST)
-    betree_var_t no_reason = config->attr_domain_count + REASON_UNKNOWN - 1;
     match_be_tree_ids_err(config, preds, cdir->cnode, subs, ids, sz, report);
 #else
     match_be_tree_ids_err(attr_domains, preds, cdir->cnode, subs, ids, sz, report);
@@ -584,12 +570,8 @@ static void search_cdir_ids_err(
     else {
         if(cdir->lchild && cdir->lchild->sub_ids->size > 0) {
 #if defined(USE_REASONLIST)
-            bool value_exists = false;
-            betree_var_t attr_var = find_pnode_attr_name(cdir, &value_exists);
-            if(value_exists)
-                reasonlist_join(report->reason_sub_id_list, attr_var, cdir->lchild->sub_ids);
-            else
-                reasonlist_join(report->reason_sub_id_list, no_reason, cdir->lchild->sub_ids);
+            betree_var_t attr_var = find_pnode_attr_name(cdir);
+            reasonlist_join(report->reason_sub_id_list, attr_var, cdir->lchild->sub_ids);
 #else
             const char* attr_name = find_pnode_attr_name(cdir);
             if(attr_name != NULL)
@@ -610,12 +592,8 @@ static void search_cdir_ids_err(
     else {
         if(cdir->rchild && cdir->rchild->sub_ids->size > 0) {
 #if defined(USE_REASONLIST)
-            bool value_exists = false;
-            betree_var_t attr_var = find_pnode_attr_name(cdir, &value_exists);
-            if(value_exists)
-                reasonlist_join(report->reason_sub_id_list, attr_var, cdir->rchild->sub_ids);
-            else
-                reasonlist_join(report->reason_sub_id_list, no_reason, cdir->rchild->sub_ids);
+            betree_var_t attr_var = find_pnode_attr_name(cdir);
+            reasonlist_join(report->reason_sub_id_list, attr_var, cdir->rchild->sub_ids);
 #else
             const char* attr_name = find_pnode_attr_name(cdir);
             if(attr_name != NULL)
@@ -1748,7 +1726,7 @@ int parse(const char* text, struct ast_node** node);
 int event_parse(const char* text, struct betree_event** event);
 
 #if defined(USE_REASONLIST)
-betree_var_t find_pnode_attr_name(struct cdir_err* cdir, bool* value_exists)
+betree_var_t find_pnode_attr_name(struct cdir_err* cdir)
 #else
 const char* find_pnode_attr_name(struct cdir_err* cdir)
 #endif
@@ -1758,10 +1736,6 @@ const char* find_pnode_attr_name(struct cdir_err* cdir)
     while(pcd && pcd->parent_type != CNODE_PARENT_PNODE) pcd = pcd->cdir_parent;
     if(!pcd || !pcd->pnode_parent) return NULL;
 #if defined(USE_REASONLIST)
-    if(pcd->pnode_parent->attr_var.attr)
-        *value_exists = false;
-    else
-        *value_exists = true;
     return pcd->pnode_parent->attr_var.var;
 #else
     return pcd->pnode_parent->attr_var.attr;

@@ -81,8 +81,7 @@ int test_bool_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
-    mu_assert(
-        (reasonlist_get(report->reason_sub_id_list, 0))->body[0] == 1, "goodReason");
+    mu_assert((reasonlist_get(report->reason_sub_id_list, 0))->body[0] == 1, "goodReason");
 #else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "b"))->body[0] == 1, "goodReason");
@@ -123,8 +122,7 @@ int test_int_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
-    mu_assert(
-        (reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
+    mu_assert((reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
 #else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "i"))->body[0] == 1, "goodReason");
@@ -165,8 +163,7 @@ int test_float_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
-    mu_assert(
-        (reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
+    mu_assert((reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
 #else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "f"))->body[0] == 1, "goodReason");
@@ -206,8 +203,7 @@ int test_bin_fail()
     betree_search_err(tree, event, report);
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
-    mu_assert(
-        (reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
+    mu_assert((reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
 #else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "s"))->body[0] == 1, "goodReason");
@@ -248,8 +244,7 @@ int test_int_list_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
-    mu_assert(
-        (reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
+    mu_assert((reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
 #else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "il"))->body[0] == 1, "goodReason");
@@ -290,8 +285,7 @@ int test_bin_list_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
-    mu_assert(
-        (reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
+    mu_assert((reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
 #else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "sl"))->body[0] == 1, "goodReason");
@@ -332,8 +326,7 @@ int test_segments_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
-    mu_assert(
-        (reasonlist_get(report->reason_sub_id_list, 0))->body[0] == 1, "goodReason");
+    mu_assert((reasonlist_get(report->reason_sub_id_list, 0))->body[0] == 1, "goodReason");
 #else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "seg"))->body[0] == 1, "goodReason");
@@ -379,8 +372,7 @@ int test_frequency_cap_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
-    mu_assert(
-        (reasonlist_get(report->reason_sub_id_list, 0))->body[0] == 1, "goodReason");
+    mu_assert((reasonlist_get(report->reason_sub_id_list, 0))->body[0] == 1, "goodReason");
 #else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "frequency_caps"))->body[0] == 1,
@@ -422,8 +414,7 @@ int test_geo_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
-    mu_assert(
-        (reasonlist_get(report->reason_sub_id_list, 3))->body[0] == 1, "goodReason");
+    mu_assert((reasonlist_get(report->reason_sub_id_list, 3))->body[0] == 1, "goodReason");
 #else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "geo"))->body[0] == 1, "goodReason");
@@ -464,8 +455,7 @@ int test_int64_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
-    mu_assert(
-        (reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
+    mu_assert((reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
 #else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "now"))->body[0] == 1, "goodReason");
@@ -510,12 +500,9 @@ int test_short_circuit_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
-    mu_assert(
-        (reasonlist_get(report->reason_sub_id_list, 2))->body[0] == 1, "goodReason");
-    mu_assert(
-        (reasonlist_get(report->reason_sub_id_list, 3))->body[0] == 2, "goodReason");
-    mu_assert(
-        (reasonlist_get(report->reason_sub_id_list, 4))->body[0] == 3, "goodReason");
+    mu_assert((reasonlist_get(report->reason_sub_id_list, 2))->body[0] == 1, "goodReason");
+    mu_assert((reasonlist_get(report->reason_sub_id_list, 3))->body[0] == 2, "goodReason");
+    mu_assert((reasonlist_get(report->reason_sub_id_list, 4))->body[0] == 3, "goodReason");
 #else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "f"))->body[0] == 1, "goodReason");
@@ -566,10 +553,8 @@ int test_multiple_bool_exprs_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
-    mu_assert(
-        (reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 3, "goodReason");
-    mu_assert(
-        (reasonlist_get(report->reason_sub_id_list, 2))->body[0] == 4, "goodReason");
+    mu_assert((reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 3, "goodReason");
+    mu_assert((reasonlist_get(report->reason_sub_id_list, 2))->body[0] == 4, "goodReason");
 #else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "i"))->body[0] == 3, "goodReason");
@@ -580,12 +565,12 @@ int test_multiple_bool_exprs_fail()
     int found_total = 0;
     for(size_t j = 0; j < 3; j++) {
         for(size_t k = 0; k < 3; k++) {
-            found_total += 
+            found_total +=
 #if defined(USE_REASONLIST)
                 ((reasonlist_get(report->reason_sub_id_list, 3))->body[k] == expected_set[j])
 #else
                 (((arraylist*)hashtable_get(report->reason_sub_id_list, "s"))->body[k]
-                               == expected_set[j])
+                    == expected_set[j])
 #endif
                 ? 1
                 : 0;
@@ -638,12 +623,12 @@ int test_memoize_fail()
     int found_total = 0;
     for(size_t j = 0; j < 5; j++) {
         for(size_t k = 0; k < 5; k++) {
-            found_total += 
+            found_total +=
 #if defined(USE_REASONLIST)
                 (((reasonlist_get(report->reason_sub_id_list, 3))->body[k]) == expected_set[j])
 #else
                 (((arraylist*)hashtable_get(report->reason_sub_id_list, "s"))->body[k]
-                               == expected_set[j])
+                    == expected_set[j])
 #endif
                 ? 1
                 : 0;
@@ -711,12 +696,12 @@ int test_all_search_term()
     int found_total = 0;
     for(size_t j = 0; j < 2; j++) {
         for(size_t k = 0; k < 2; k++) {
-            found_total += 
+            found_total +=
 #if defined(USE_REASONLIST)
                 (((reasonlist_get(report->reason_sub_id_list, 6))->body[k]) == expected_set[j])
 #else
                 (((arraylist*)hashtable_get(report->reason_sub_id_list, "seg"))->body[k]
-                               == expected_set[j])
+                    == expected_set[j])
 #endif
                 ? 1
                 : 0;
@@ -771,12 +756,12 @@ int test_event_search_reason()
     int found_total1 = 0;
     for(size_t j = 0; j < 3; j++) {
         for(size_t k = 0; k < 3; k++) {
-            found_total1 += 
+            found_total1 +=
 #if defined(USE_REASONLIST)
                 (((reasonlist_get(report->reason_sub_id_list, 3))->body[k]) == expected_set1[j])
 #else
                 (((arraylist*)hashtable_get(report->reason_sub_id_list, "s"))->body[k]
-                                == expected_set1[j])
+                    == expected_set1[j])
 #endif
                 ? 1
                 : 0;
@@ -788,12 +773,12 @@ int test_event_search_reason()
     int found_total2 = 0;
     for(size_t j = 0; j < 4; j++) {
         for(size_t k = 0; k < 4; k++) {
-            found_total2 += 
+            found_total2 +=
 #if defined(USE_REASONLIST)
-                (((reasonlist_get(report->reason_sub_id_list, 6))->body[k]) == expected_set2[j])
+                (((reasonlist_get(report->reason_sub_id_list, 0))->body[k]) == expected_set2[j])
 #else
                 (((arraylist*)hashtable_get(report->reason_sub_id_list, "b"))->body[k]
-                                == expected_set2[j])
+                    == expected_set2[j])
 #endif
                 ? 1
                 : 0;
