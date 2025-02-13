@@ -69,15 +69,24 @@ int test_bool_fail()
 
     betree_make_sub_ids(tree);
     const char* event = "{\"b\": false, \"i\": 1}";
+#if defined(USE_REASONLIST)
+    struct report_err* report = make_report_err(tree);
+#else
     struct report_err* report = make_report_err();
+#endif
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
+#if defined(USE_REASONLIST)
+    mu_assert(
+        (reasonlist_get(report->reason_sub_id_list, 0))->body[0] == 1, "goodReason");
+#else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "b"))->body[0] == 1, "goodReason");
+#endif
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -102,15 +111,24 @@ int test_int_fail()
 
     betree_make_sub_ids(tree);
     const char* event = "{\"b\": true, \"i\": 2}";
+#if defined(USE_REASONLIST)
+    struct report_err* report = make_report_err(tree);
+#else
     struct report_err* report = make_report_err();
+#endif
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
+#if defined(USE_REASONLIST)
+    mu_assert(
+        (reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
+#else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "i"))->body[0] == 1, "goodReason");
+#endif
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -135,15 +153,24 @@ int test_float_fail()
 
     betree_make_sub_ids(tree);
     const char* event = "{\"b\": true, \"f\": 0.2}";
+#if defined(USE_REASONLIST)
+    struct report_err* report = make_report_err(tree);
+#else
     struct report_err* report = make_report_err();
+#endif
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
+#if defined(USE_REASONLIST)
+    mu_assert(
+        (reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
+#else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "f"))->body[0] == 1, "goodReason");
+#endif
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -167,15 +194,24 @@ int test_bin_fail()
 
     betree_make_sub_ids(tree);
     const char* event = "{\"b\": true, \"s\": \"betree\"}";
+#if defined(USE_REASONLIST)
+    struct report_err* report = make_report_err(tree);
+#else
     struct report_err* report = make_report_err();
+#endif
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
 
     betree_search_err(tree, event, report);
     mu_assert(report->matched == 0, "goodEvent");
+#if defined(USE_REASONLIST)
+    mu_assert(
+        (reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
+#else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "s"))->body[0] == 1, "goodReason");
+#endif
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -200,16 +236,24 @@ int test_int_list_fail()
 
     betree_make_sub_ids(tree);
     const char* event = "{\"b\": true, \"il\": [3]}";
+#if defined(USE_REASONLIST)
+    struct report_err* report = make_report_err(tree);
+#else
     struct report_err* report = make_report_err();
-
+#endif
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
+#if defined(USE_REASONLIST)
+    mu_assert(
+        (reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
+#else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "il"))->body[0] == 1, "goodReason");
+#endif
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -234,15 +278,24 @@ int test_bin_list_fail()
 
     betree_make_sub_ids(tree);
     const char* event = "{\"b\": true, \"sl\": [\"how\"]}";
+#if defined(USE_REASONLIST)
+    struct report_err* report = make_report_err(tree);
+#else
     struct report_err* report = make_report_err();
+#endif
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
+#if defined(USE_REASONLIST)
+    mu_assert(
+        (reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
+#else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "sl"))->body[0] == 1, "goodReason");
+#endif
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -267,15 +320,24 @@ int test_segments_fail()
 
     betree_make_sub_ids(tree);
     const char* event = "{\"now\": 30, \"seg\": [[1, 10000000]]}";
+#if defined(USE_REASONLIST)
+    struct report_err* report = make_report_err(tree);
+#else
     struct report_err* report = make_report_err();
+#endif
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
+#if defined(USE_REASONLIST)
+    mu_assert(
+        (reasonlist_get(report->reason_sub_id_list, 0))->body[0] == 1, "goodReason");
+#else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "seg"))->body[0] == 1, "goodReason");
+#endif
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -305,16 +367,25 @@ int test_frequency_cap_fail()
     betree_make_sub_ids(tree);
     const char* event
         = "{\"now\": 30, \"frequency_caps\": [[\"campaign\", 30, \"namespace\", 20, 10]]}";
+#if defined(USE_REASONLIST)
+    struct report_err* report = make_report_err(tree);
+#else
     struct report_err* report = make_report_err();
+#endif
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
+#if defined(USE_REASONLIST)
+    mu_assert(
+        (reasonlist_get(report->reason_sub_id_list, 0))->body[0] == 1, "goodReason");
+#else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "frequency_caps"))->body[0] == 1,
         "goodReason");
+#endif
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -339,15 +410,24 @@ int test_geo_fail()
 
     betree_make_sub_ids(tree);
     const char* event = "{\"b\": true, \"latitude\": 101.0, \"longitude\": 99.0}";
+#if defined(USE_REASONLIST)
+    struct report_err* report = make_report_err(tree);
+#else
     struct report_err* report = make_report_err();
+#endif
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
+#if defined(USE_REASONLIST)
+    mu_assert(
+        (reasonlist_get(report->reason_sub_id_list, 3))->body[0] == 1, "goodReason");
+#else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "geo"))->body[0] == 1, "goodReason");
+#endif
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -372,15 +452,24 @@ int test_int64_fail()
 
     betree_make_sub_ids(tree);
     const char* event = "{\"b\": true, \"now\": 2}";
+#if defined(USE_REASONLIST)
+    struct report_err* report = make_report_err(tree);
+#else
     struct report_err* report = make_report_err();
+#endif
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
+#if defined(USE_REASONLIST)
+    mu_assert(
+        (reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
+#else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "now"))->body[0] == 1, "goodReason");
+#endif
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
@@ -409,19 +498,32 @@ int test_short_circuit_fail()
 
     betree_make_sub_ids(tree);
     const char* event = "{\"b\": true, \"i\": 0}";
+#if defined(USE_REASONLIST)
+    struct report_err* report = make_report_err(tree);
+#else
     struct report_err* report = make_report_err();
+#endif
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
+#if defined(USE_REASONLIST)
+    mu_assert(
+        (reasonlist_get(report->reason_sub_id_list, 2))->body[0] == 1, "goodReason");
+    mu_assert(
+        (reasonlist_get(report->reason_sub_id_list, 3))->body[0] == 2, "goodReason");
+    mu_assert(
+        (reasonlist_get(report->reason_sub_id_list, 4))->body[0] == 3, "goodReason");
+#else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "f"))->body[0] == 1, "goodReason");
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "s"))->body[0] == 2, "goodReason");
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "il"))->body[0] == 3, "goodReason");
+#endif
 
     // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests_short_circuit.dot");
 
@@ -452,23 +554,39 @@ int test_multiple_bool_exprs_fail()
 
     betree_make_sub_ids(tree);
     const char* event = "{\"b\": false, \"i\": 2, \"f\": 0.2, \"s\": \"s3\"}";
+#if defined(USE_REASONLIST)
+    struct report_err* report = make_report_err(tree);
+#else
     struct report_err* report = make_report_err();
+#endif
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
+#if defined(USE_REASONLIST)
+    mu_assert(
+        (reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 3, "goodReason");
+    mu_assert(
+        (reasonlist_get(report->reason_sub_id_list, 2))->body[0] == 4, "goodReason");
+#else
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "i"))->body[0] == 3, "goodReason");
     mu_assert(
         ((arraylist*)hashtable_get(report->reason_sub_id_list, "f"))->body[0] == 4, "goodReason");
+#endif
     const int expected_set[] = { 1, 2, 5 };
     int found_total = 0;
     for(size_t j = 0; j < 3; j++) {
         for(size_t k = 0; k < 3; k++) {
-            found_total += (((arraylist*)hashtable_get(report->reason_sub_id_list, "s"))->body[k]
+            found_total += 
+#if defined(USE_REASONLIST)
+                ((reasonlist_get(report->reason_sub_id_list, 3))->body[k] == expected_set[j])
+#else
+                (((arraylist*)hashtable_get(report->reason_sub_id_list, "s"))->body[k]
                                == expected_set[j])
+#endif
                 ? 1
                 : 0;
         }
@@ -505,7 +623,11 @@ int test_memoize_fail()
     betree_make_sub_ids(tree);
 
     const char* event = "{\"b\": false, \"i\": 3, \"f\": 0.0, \"s\": \"s12\"}";
+#if defined(USE_REASONLIST)
+    struct report_err* report = make_report_err(tree);
+#else
     struct report_err* report = make_report_err();
+#endif
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
@@ -516,8 +638,13 @@ int test_memoize_fail()
     int found_total = 0;
     for(size_t j = 0; j < 5; j++) {
         for(size_t k = 0; k < 5; k++) {
-            found_total += (((arraylist*)hashtable_get(report->reason_sub_id_list, "s"))->body[k]
+            found_total += 
+#if defined(USE_REASONLIST)
+                (((reasonlist_get(report->reason_sub_id_list, 3))->body[k]) == expected_set[j])
+#else
+                (((arraylist*)hashtable_get(report->reason_sub_id_list, "s"))->body[k]
                                == expected_set[j])
+#endif
                 ? 1
                 : 0;
         }
@@ -569,7 +696,11 @@ int test_all_search_term()
     const char* event = "{\"b\": true, \"i\": 10, \"f\": 3.14, \"s\": \"good\", \"il\": [1,2,3], "
                         "\"sl\": [\"bad\"], \"seg\": [[1, 20000001]], \"frequency_caps\": "
                         "[[\"flight\", 10, \"ns\", 0, 0]], \"now\": 100}";
+#if defined(USE_REASONLIST)
+    struct report_err* report = make_report_err(tree);
+#else
     struct report_err* report = make_report_err();
+#endif
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
@@ -580,8 +711,13 @@ int test_all_search_term()
     int found_total = 0;
     for(size_t j = 0; j < 2; j++) {
         for(size_t k = 0; k < 2; k++) {
-            found_total += (((arraylist*)hashtable_get(report->reason_sub_id_list, "seg"))->body[k]
+            found_total += 
+#if defined(USE_REASONLIST)
+                (((reasonlist_get(report->reason_sub_id_list, 6))->body[k]) == expected_set[j])
+#else
+                (((arraylist*)hashtable_get(report->reason_sub_id_list, "seg"))->body[k]
                                == expected_set[j])
+#endif
                 ? 1
                 : 0;
         }
@@ -620,7 +756,11 @@ int test_event_search_reason()
 
     const char* event = "{\"b\": true, \"i\": 10, \"f\": 3.14, \"s\": \"cool\"}";
 
+#if defined(USE_REASONLIST)
+    struct report_err* report = make_report_err(tree);
+#else
     struct report_err* report = make_report_err();
+#endif
 #if defined(DEBUG)
     fprintf(stderr, "search ... %s\n", event);
 #endif
@@ -631,8 +771,13 @@ int test_event_search_reason()
     int found_total1 = 0;
     for(size_t j = 0; j < 3; j++) {
         for(size_t k = 0; k < 3; k++) {
-            found_total1 += (((arraylist*)hashtable_get(report->reason_sub_id_list, "s"))->body[k]
+            found_total1 += 
+#if defined(USE_REASONLIST)
+                (((reasonlist_get(report->reason_sub_id_list, 3))->body[k]) == expected_set1[j])
+#else
+                (((arraylist*)hashtable_get(report->reason_sub_id_list, "s"))->body[k]
                                 == expected_set1[j])
+#endif
                 ? 1
                 : 0;
         }
@@ -643,8 +788,13 @@ int test_event_search_reason()
     int found_total2 = 0;
     for(size_t j = 0; j < 4; j++) {
         for(size_t k = 0; k < 4; k++) {
-            found_total2 += (((arraylist*)hashtable_get(report->reason_sub_id_list, "b"))->body[k]
+            found_total2 += 
+#if defined(USE_REASONLIST)
+                (((reasonlist_get(report->reason_sub_id_list, 6))->body[k]) == expected_set2[j])
+#else
+                (((arraylist*)hashtable_get(report->reason_sub_id_list, "b"))->body[k]
                                 == expected_set2[j])
+#endif
                 ? 1
                 : 0;
         }

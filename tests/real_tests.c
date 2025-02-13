@@ -1,4 +1,7 @@
 #include <float.h>
+#include <gsl/gsl_histogram.h>
+#include <gsl/gsl_sort.h>
+#include <gsl/gsl_statistics.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdint.h>
@@ -7,9 +10,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <valgrind/callgrind.h>
-#include <gsl/gsl_histogram.h>
-#include <gsl/gsl_sort.h>
-#include <gsl/gsl_statistics.h>
 
 #include "betree.h"
 #include "debug.h"
@@ -24,13 +24,13 @@
 #define DEFAULT_SEARCH_COUNT 10
 
 // wc -L filename
-#define MAX_EVENT_CHARACTERS 20000
-#define MAX_EXPR_CHARACTERS 17000
-#define MAX_CONSTANT_CHARACTERS 20
+#define MAX_EVENT_CHARACTERS 200000
+#define MAX_EXPR_CHARACTERS 170000
+#define MAX_CONSTANT_CHARACTERS 200
 
-const char* EXPRS_FILE = "data/betree_exprs";
-const char* CONSTANTS_FILE = "data/betree_constants";
-const char* EVENTS_FILE = "data/betree_events";
+const char* EXPRS_FILE = "data/betree_exprs_basic";
+const char* CONSTANTS_FILE = "data/betree_constants_basic";
+const char* EVENTS_FILE = "data/betree_events_basic";
 
 struct betree_events {
     size_t count;
@@ -38,10 +38,12 @@ struct betree_events {
 };
 
 
-size_t max(size_t x, size_t y){
-    if(x > y){
+size_t max(size_t x, size_t y)
+{
+    if(x > y) {
         return x;
-    }else{
+    }
+    else {
         return y;
     }
 }
@@ -56,8 +58,7 @@ void add_event(char* event, struct betree_events* events)
         }
     }
     else {
-        char** new_events
-            = realloc(events->events, sizeof(*new_events) * ((events->count) + 1));
+        char** new_events = realloc(events->events, sizeof(*new_events) * ((events->count) + 1));
         if(new_events == NULL) {
             fprintf(stderr, "%s realloc failed", __func__);
             abort();
@@ -109,7 +110,7 @@ size_t read_betree_exprs(struct betree* tree)
     FILE* f = fopen(EXPRS_FILE, "r");
     FILE* constants_f = fopen(CONSTANTS_FILE, "r");
 
-    //char* lines[MAX_EXPRS];
+    // char* lines[MAX_EXPRS];
     char line[MAX_EXPR_CHARACTERS]; // Arbitrary from what I've seen
     char constants_line[MAX_CONSTANT_CHARACTERS];
     size_t count = 0;
@@ -133,18 +134,19 @@ size_t read_betree_exprs(struct betree* tree)
             betree_make_integer_constant("flight_id", flight_id),
         };
 
-        const struct betree_sub* sub = betree_make_sub(tree, boolean_expression_id, constant_count, constants, line);
+        const struct betree_sub* sub
+            = betree_make_sub(tree, boolean_expression_id, constant_count, constants, line);
         subs[count] = sub;
         count++;
-        betree_free_constants(constant_count, (struct betree_constant**) constants);
+        betree_free_constants(constant_count, (struct betree_constant**)constants);
         free(copy);
         if(MAX_EXPRS != 0 && count == MAX_EXPRS) {
             break;
         }
     }
     /*for(size_t i = 0; i < tree->config->attr_domain_count; i++) {*/
-        /*const struct attr_domain* attr_domain = tree->config->attr_domains[i];*/
-        /*print_attr_domain(attr_domain);*/
+    /*const struct attr_domain* attr_domain = tree->config->attr_domains[i];*/
+    /*print_attr_domain(attr_domain);*/
     /*}*/
     fclose(f);
     fclose(constants_f);
@@ -162,7 +164,7 @@ size_t read_betree_exprs(struct betree* tree)
 
 void read_betree_defs(struct betree* tree)
 {
-    FILE* f = fopen("data/betree_defs", "r");
+    FILE* f = fopen("data/betree_defs_basic", "r");
 
     char line[LINE_MAX];
     while(fgets(line, sizeof(line), f)) {
@@ -172,9 +174,9 @@ void read_betree_defs(struct betree* tree)
     fclose(f);
 }
 
-int compare_int( const void* a, const void* b )
+int compare_int(const void* a, const void* b)
 {
-    if( *(int*)a == *(int*)b ) return 0;
+    if(*(int*)a == *(int*)b) return 0;
     return *(int*)a < *(int*)b ? -1 : 1;
 }
 
@@ -184,8 +186,10 @@ int main(int argc, char** argv)
     if(argc > 1) {
         search_count = atoi(argv[1]);
     }
-    if(access("data/betree_defs", F_OK) == -1 || access("data/betree_events", F_OK) == -1
-        || access("data/betree_exprs", F_OK) == -1 || access("data/betree_constants", F_OK) == -1) {
+    if(access("data/betree_defs_basic", F_OK) == -1
+        || access("data/betree_events_basic", F_OK) == -1
+        || access("data/betree_exprs_basic", F_OK) == -1
+        || access("data/betree_constants_basic", F_OK) == -1) {
         fprintf(stderr, "Missing files, skipping the tests");
         return 0;
     }
@@ -221,7 +225,7 @@ int main(int argc, char** argv)
     size_t search_us_i = 0;
     size_t max_match_expression = 0;
     int zero_boolean_expression_match = 0;
-    
+
     for(size_t j = 0; j < search_count; j++) {
         for(size_t i = 0; i < events.count; i++) {
             clock_gettime(CLOCK_MONOTONIC_RAW, &gen_event_done);
@@ -245,7 +249,7 @@ int main(int argc, char** argv)
             memoized_sum += report->memoized;
             shorted_sum += report->shorted;
             max_match_expression = max(max_match_expression, report->matched);
-            zero_boolean_expression_match += report->matched == 0 ? 1:0;
+            zero_boolean_expression_match += report->matched == 0 ? 1 : 0;
             // print expression id match by boolean expression
             // printf("report subs id: [");
             // for(int ka=0;ka<report->matched;ka++){
@@ -273,7 +277,8 @@ int main(int argc, char** argv)
     double matched_average = (double)matched_sum / (double)MAX_EVENTS;
     double memoized_average = (double)memoized_sum / (double)MAX_EVENTS;
     double shorted_average = (double)shorted_sum / (double)MAX_EVENTS;
-    printf("%zu searches, %zu expressions, %zu events, %zu preds, %zu memoize preds. Evaluated %.2f, matched %.2f, memoized %.2f, shorted %.2f\n",
+    printf("%zu searches, %zu expressions, %zu events, %zu preds, %zu memoize preds. Evaluated "
+           "%.2f, matched %.2f, memoized %.2f, shorted %.2f\n",
         search_us_count,
         expr_count,
         event_count,
@@ -288,21 +293,36 @@ int main(int argc, char** argv)
     double search_us_max = gsl_stats_max(search_us_data, 1, search_us_count);
     double search_us_mean = gsl_stats_mean(search_us_data, 1, search_us_count);
     gsl_sort(search_us_data, 1, search_us_count);
-    double search_us_90 = gsl_stats_quantile_from_sorted_data(search_us_data, 1, search_us_count, 0.90);
-    double search_us_95 = gsl_stats_quantile_from_sorted_data(search_us_data, 1, search_us_count, 0.95);
-    double search_us_99 = gsl_stats_quantile_from_sorted_data(search_us_data, 1, search_us_count, 0.99);
+    double search_us_90
+        = gsl_stats_quantile_from_sorted_data(search_us_data, 1, search_us_count, 0.90);
+    double search_us_95
+        = gsl_stats_quantile_from_sorted_data(search_us_data, 1, search_us_count, 0.95);
+    double search_us_99
+        = gsl_stats_quantile_from_sorted_data(search_us_data, 1, search_us_count, 0.99);
 
-    printf("Min: %.1f, Mean: %.1f, Max: %.1f, 90: %.1f, 95: %.1f, 99: %.1f\n", search_us_min, search_us_mean, search_us_max, search_us_90, search_us_95, search_us_99);
+    printf("Min: %.1f, Mean: %.1f, Max: %.1f, 90: %.1f, 95: %.1f, 99: %.1f\n",
+        search_us_min,
+        search_us_mean,
+        search_us_max,
+        search_us_90,
+        search_us_95,
+        search_us_99);
 
-    printf("| %lu | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f | |\n", insert_us, search_us_min, search_us_mean, search_us_max, search_us_90, search_us_95, search_us_99);
+    printf("| %lu | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f | |\n",
+        insert_us,
+        search_us_min,
+        search_us_mean,
+        search_us_max,
+        search_us_90,
+        search_us_95,
+        search_us_99);
     printf("max expression matched: %ld\n", max_match_expression);
     printf("no  expression matched: %d\n", zero_boolean_expression_match);
     // DEBUG
     write_dot_file(tree);
     // DEBUG
-    
+
     free(events.events);
     betree_free(tree);
     return 0;
 }
-

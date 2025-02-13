@@ -14,6 +14,7 @@
 #include "betree_err.h"
 #include "error.h"
 #include "hashmap.h"
+#include "reasons.h"
 #include "tree.h"
 #include "tree_err.h"
 #include "utils.h"
@@ -586,7 +587,12 @@ static bool betree_search_with_event_filled_err(
         = make_environment(betree->config->attr_domain_count, event);
     if(validate_variables(betree->config, variables) == false) {
         fprintf(stderr, "Failed to validate event\n");
+#if defined(USE_REASONLIST)
+        betree_var_t invalid_event = betree->config->attr_domain_count + REASON_INVALID_EVENT - 1;
+        set_reason_sub_id_lists(report, invalid_event, betree->sub_ids);
+#else
         set_reason_sub_id_lists(report, "invalid_event", betree->sub_ids);
+#endif
         return false;
     }
     return betree_search_with_preds_err(betree->config, variables, betree->cnode, report);
@@ -602,7 +608,12 @@ bool betree_search_with_event_filled_ids_err(const struct betree_err* betree,
         = make_environment(betree->config->attr_domain_count, event);
     if(validate_variables(betree->config, variables) == false) {
         fprintf(stderr, "Failed to validate event\n");
+#if defined(USE_REASONLIST)
+        betree_var_t invalid_event = betree->config->attr_domain_count + REASON_INVALID_EVENT - 1;
+        set_reason_sub_id_lists(report, invalid_event, betree->sub_ids);
+#else
         set_reason_sub_id_lists(report, "invalid_event", betree->sub_ids);
+#endif
         return false;
     }
     return betree_search_with_preds_ids_err(
@@ -656,7 +667,41 @@ bool betree_search_with_event_ids_err(const struct betree_err* betree,
     return betree_search_with_event_filled_ids_err(betree, event, report, ids, sz);
 }
 
+#if defined(USE_REASONLIST)
+struct reason_map* make_reason_map(const struct betree_err* betree)
+{
+    struct reason_map* map = bmalloc(sizeof(struct reason_map));
+
+    map->size = betree->config->attr_domain_count + REASON_ADDITIONAL_MAX;
+    map->reason = bmalloc(sizeof(char*) * (map->size));
+    for(betree_var_t i = 0; i < betree->config->attr_domain_count; i++) {
+        map->reason[i] = bstrdup(betree->config->attr_domains[i]->attr_var.attr);
+    }
+
+    betree_var_t idx_geo = ADDITIONAL_REASON(betree->config->attr_domain_count, REASON_GEO);
+    map->reason[idx_geo] = bstrdup("geo");
+    betree_var_t idx_unknown = ADDITIONAL_REASON(betree->config->attr_domain_count, REASON_UNKNOWN);
+    map->reason[idx_unknown] = bstrdup("no_reason");
+    betree_var_t idx_invalid_event
+        = ADDITIONAL_REASON(betree->config->attr_domain_count, REASON_INVALID_EVENT);
+    map->reason[idx_invalid_event] = bstrdup("invalid_event");
+
+    return map;
+}
+
+void free_reason_map(struct reason_map* map)
+{
+    for(betree_var_t i = 0; i < map->size; i++) {
+        bfree(map->reason[i]);
+    }
+    bfree(map->reason);
+    bfree(map);
+}
+
+struct report_err* make_report_err(const struct betree_err* betree)
+#else
 struct report_err* make_report_err()
+#endif
 {
     struct report_err* report = bcalloc(sizeof(*report));
     if(report == NULL) {
@@ -668,12 +713,23 @@ struct report_err* make_report_err()
     report->memoized = 0;
     report->shorted = 0;
     report->subs = NULL;
+#if defined(USE_REASONLIST)
+    report->reason_sub_id_list
+        = reasonlist_create(betree->config->attr_domain_count + REASON_ADDITIONAL_MAX);
+    report->reason_map = make_reason_map(betree);
+#else
     report->reason_sub_id_list = hashtable_create();
+#endif
+
     return report;
 }
 
 void free_report_err(struct report_err* report)
 {
+#if defined(USE_REASONLIST)
+    reasonlist_destroy(report->reason_sub_id_list);
+    free_reason_map(report->reason_map);
+#else
     for(size_t i = 0; i < report->reason_sub_id_list->capacity; i++) {
         if(report->reason_sub_id_list->body[i].key && report->reason_sub_id_list->body[i].value) {
             bfree(report->reason_sub_id_list->body[i].key);
@@ -681,6 +737,7 @@ void free_report_err(struct report_err* report)
         }
     }
     hashtable_destroy(report->reason_sub_id_list);
+#endif
     bfree(report->subs);
     bfree(report);
 }

@@ -5,10 +5,10 @@
 #include <stdlib.h>
 
 #include "betree.h"
+#include "betree_err.h"
 #include "config.h"
 #include "memoize.h"
 #include "value.h"
-#include "betree_err.h"
 
 
 struct cnode_err;
@@ -61,59 +61,80 @@ struct pdir_err {
     };
 };
 
-void match_be_tree_err(const struct attr_domain** attr_domains,
+void match_be_tree_err(
+#if defined(USE_REASONLIST)
+    const struct config* config,
+#else
+    const struct attr_domain** attr_domains,
+#endif
     const struct betree_variable** preds,
     const struct cnode_err* cnode,
     struct subs_to_eval* subs,
     struct report_err* report);
-void match_be_tree_node_counting_err(const struct attr_domain** attr_domains,
+void match_be_tree_node_counting_err(
+#if defined(USE_REASONLIST)
+    const struct config* config,
+#else
+    const struct attr_domain** attr_domains,
+#endif
     const struct betree_variable** preds,
     const struct cnode_err* cnode,
-    struct subs_to_eval* subs, int* node_count);
+    struct subs_to_eval* subs,
+    int* node_count);
 bool match_sub_err(size_t attr_domains_count,
     const struct betree_variable** preds,
     const struct betree_sub* sub,
     struct report_err* report,
     struct memoize* memoize,
     const uint64_t* undefined,
+#if defined(USE_REASONLIST)
+    betree_var_t* last_reason,
+#else
     char* last_reason,
+#endif
     struct attr_domain** attr_domains,
     hashtable* memoize_table);
 
 void add_sub_err(betree_sub_t id, struct report_err* report);
 
-bool sub_is_enclosed_err(const struct attr_domain** attr_domains, const struct betree_sub* sub, const struct cdir_err* cdir);
+bool sub_is_enclosed_err(const struct attr_domain** attr_domains,
+    const struct betree_sub* sub,
+    const struct cdir_err* cdir);
 
 struct lnode_err* make_lnode_err(const struct config* config, struct cnode_err* parent);
 void free_lnode_err(struct lnode_err* lnode);
 struct cnode_err* make_cnode_err(const struct config* config, struct cdir_err* parent);
 void free_cnode_err(struct cnode_err* cnode);
 
-struct betree_event* make_event_from_string_err(const struct betree_err* betree, const char* event_str);
+struct betree_event* make_event_from_string_err(
+    const struct betree_err* betree, const char* event_str);
 
 struct betree_sub* find_sub_id_err(betree_sub_t id, struct cnode_err* cnode);
 
 bool betree_search_with_preds_err(const struct config* config,
     const struct betree_variable** preds,
     const struct cnode_err* cnode,
-    struct report_err* report
-    );
+    struct report_err* report);
 
 bool betree_search_with_preds_ids_err(const struct config* config,
     const struct betree_variable** preds,
     const struct cnode_err* cnode,
     struct report_err* report,
     const uint64_t* ids,
-    size_t sz
-    );
+    size_t sz);
 
-bool insert_be_tree_err(const struct config* config, const struct betree_sub* sub, struct cnode_err* cnode, struct cdir_err* cdir);
+bool insert_be_tree_err(const struct config* config,
+    const struct betree_sub* sub,
+    struct cnode_err* cnode,
+    struct cdir_err* cdir);
 
 void build_sub_ids_cdir(struct cdir_err* cd);
 void build_sub_ids_cnode(struct cnode_err* cn);
 
-void set_reason_sub_id_lists(
-    struct report_err* report,
+void set_reason_sub_id_lists(struct report_err* report,
+#if defined(USE_REASONLIST)
+    betree_var_t reason,
+#else
     const char* variable_name,
-    struct arraylist* sub_ids
-);
+#endif
+    struct arraylist* sub_ids);

@@ -30,9 +30,9 @@
 #define MAX_EXPR_CHARACTERS 170000
 #define MAX_CONSTANT_CHARACTERS 200
 
-const char* EXPRS_FILE = "data/betree_exprs";
-const char* CONSTANTS_FILE = "data/betree_constants";
-const char* EVENTS_FILE = "data/betree_events";
+const char* EXPRS_FILE = "data/betree_exprs_basic";
+const char* CONSTANTS_FILE = "data/betree_constants_basic";
+const char* EVENTS_FILE = "data/betree_events_basic";
 
 struct betree_events {
     size_t count;
@@ -168,7 +168,7 @@ size_t read_betree_exprs(struct betree_err* tree)
 
 void read_betree_defs(struct betree_err* tree)
 {
-    FILE* f = fopen("data/betree_defs", "r");
+    FILE* f = fopen("data/betree_defs_basic", "r");
 
     char line[LINE_MAX];
     while(fgets(line, sizeof(line), f)) {
@@ -190,8 +190,10 @@ int main(int argc, char** argv)
     if(argc > 1) {
         search_count = atoi(argv[1]);
     }
-    if(access("data/betree_defs", F_OK) == -1 || access("data/betree_events", F_OK) == -1
-        || access("data/betree_exprs", F_OK) == -1 || access("data/betree_constants", F_OK) == -1) {
+    if(access("data/betree_defs_basic", F_OK) == -1
+        || access("data/betree_events_basic", F_OK) == -1
+        || access("data/betree_exprs_basic", F_OK) == -1
+        || access("data/betree_constants_basic", F_OK) == -1) {
         fprintf(stderr, "Missing files, skipping the tests");
         return 0;
     }
@@ -233,7 +235,7 @@ int main(int argc, char** argv)
             clock_gettime(CLOCK_MONOTONIC_RAW, &gen_event_done);
 
             char* event = events.events[i];
-            struct report_err* report = make_report_err();
+            struct report_err* report = make_report_err(tree);
             if(betree_search_err(tree, event, report) == false) {
                 fprintf(stderr, "Failed to search with event\n");
                 abort();
