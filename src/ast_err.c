@@ -823,14 +823,20 @@ static bool match_node_inner_err(const struct betree_variable** preds,
 )
 {
     if(node->memoize_id != INVALID_PRED) {
+#if !defined(USE_UINT64_KEY)
         char memoize_id_c[22];
         sprintf(memoize_id_c, "%ld", node->memoize_id);
+#endif
         if(test_bit(memoize->pass, node->memoize_id)) {
             if(report != NULL) {
                 report->memoized++;
             }
 #if defined(USE_REASONLIST)
+#if defined(USE_UINT64_KEY)
+            *last_reason = hashtable_get(memoize_table, node->memoize_id);
+#else
             *last_reason = hashtable_get(memoize_table, memoize_id_c);
+#endif
 #else
             set_reason_sub_id_list(last_reason, hashtable_get(memoize_table, memoize_id_c));
 #endif
@@ -841,7 +847,11 @@ static bool match_node_inner_err(const struct betree_variable** preds,
                 report->memoized++;
             }
 #if defined(USE_REASONLIST)
+#if defined(USE_UINT64_KEY)
+            *last_reason = hashtable_get(memoize_table, node->memoize_id);
+#else
             *last_reason = hashtable_get(memoize_table, memoize_id_c);
+#endif
 #else
             set_reason_sub_id_list(last_reason, hashtable_get(memoize_table, memoize_id_c));
 #endif
@@ -897,12 +907,18 @@ static bool match_node_inner_err(const struct betree_variable** preds,
             abort();
     }
     if(node->memoize_id != INVALID_PRED) {
+#if !defined(USE_UINT64_KEY)
         char memoize_id_c[23];
         sprintf(memoize_id_c, "%ld", node->memoize_id);
+#endif
         if(result) {
             set_bit(memoize->pass, node->memoize_id);
 #if defined(USE_REASONLIST)
+#if defined(USE_UINT64_KEY)
+            hashtable_set(memoize_table, node->memoize_id, *last_reason);
+#else
             hashtable_set(memoize_table, bstrdup(memoize_id_c), *last_reason);
+#endif
 #else
             hashtable_set(memoize_table, bstrdup(memoize_id_c), bstrdup(last_reason));
 #endif
@@ -910,7 +926,11 @@ static bool match_node_inner_err(const struct betree_variable** preds,
         else {
             set_bit(memoize->fail, node->memoize_id);
 #if defined(USE_REASONLIST)
+#if defined(USE_UINT64_KEY)
+            hashtable_set(memoize_table, node->memoize_id, *last_reason);
+#else
             hashtable_set(memoize_table, bstrdup(memoize_id_c), *last_reason);
+#endif
 #else
             hashtable_set(memoize_table, bstrdup(memoize_id_c), bstrdup(last_reason));
 #endif

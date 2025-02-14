@@ -81,6 +81,7 @@ int test_bool_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
+    mu_assert(strcmp(report->reason_map->reason[0], "b") == 0, "goodReason");
     mu_assert((reasonlist_get(report->reason_sub_id_list, 0))->body[0] == 1, "goodReason");
 #else
     mu_assert(
@@ -122,6 +123,7 @@ int test_int_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
+    mu_assert(strcmp(report->reason_map->reason[1], "i") == 0, "goodReason");
     mu_assert((reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
 #else
     mu_assert(
@@ -163,6 +165,7 @@ int test_float_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
+    mu_assert(strcmp(report->reason_map->reason[1], "f") == 0, "goodReason");
     mu_assert((reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
 #else
     mu_assert(
@@ -203,6 +206,7 @@ int test_bin_fail()
     betree_search_err(tree, event, report);
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
+    mu_assert(strcmp(report->reason_map->reason[1], "s") == 0, "goodReason");
     mu_assert((reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
 #else
     mu_assert(
@@ -244,6 +248,7 @@ int test_int_list_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
+    mu_assert(strcmp(report->reason_map->reason[1], "il") == 0, "goodReason");
     mu_assert((reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
 #else
     mu_assert(
@@ -285,6 +290,7 @@ int test_bin_list_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
+    mu_assert(strcmp(report->reason_map->reason[1], "sl") == 0, "goodReason");
     mu_assert((reasonlist_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
 #else
     mu_assert(
@@ -326,6 +332,7 @@ int test_segments_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
+    mu_assert(strcmp(report->reason_map->reason[0], "seg") == 0, "goodReason");
     mu_assert((reasonlist_get(report->reason_sub_id_list, 0))->body[0] == 1, "goodReason");
 #else
     mu_assert(
@@ -372,6 +379,7 @@ int test_frequency_cap_fail()
 
     mu_assert(report->matched == 0, "goodEvent");
 #if defined(USE_REASONLIST)
+    mu_assert(strcmp(report->reason_map->reason[0], "frequency_caps") == 0, "goodReason");
     mu_assert((reasonlist_get(report->reason_sub_id_list, 0))->body[0] == 1, "goodReason");
 #else
     mu_assert(

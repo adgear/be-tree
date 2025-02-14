@@ -718,7 +718,7 @@ void write_dot_to_file_err(const struct betree_err* tree, const char* fname)
 // legacy
 void write_dot_file_err(const struct betree_err* tree)
 {
-    FILE* f = fopen("data/betree.dot", "we");
+    FILE* f = fopen("data/betree_err.dot", "we");
     if(f == NULL) {
         fprintf(stderr, "Can't open file data/betree.dot to write the dot_file");
         abort();

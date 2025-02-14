@@ -142,7 +142,7 @@ static enum short_circuit_e try_short_circuit_err(size_t attr_domains_count,
             for(size_t j = 0; j < attr_domains_count; j++) {
                 if((1 << (j % 64) & short_circuit->fail[i]) && (1 << (j % 64) & undefined[i])) {
 #if defined(USE_REASONLIST)
-                    *last_reason = attr_domains[j]->attr_var.var;
+                    *last_reason = j;
 #else
                     set_reason_sub_id_list(last_reason, attr_domains[j]->attr_var.attr);
 #endif
@@ -159,12 +159,14 @@ static enum short_circuit_e try_short_circuit_err(size_t attr_domains_count,
 static void free_memoize_table(hashtable* memoize_table)
 {
     for(size_t i = 0; i < memoize_table->capacity; i++) {
+#if !defined(USE_UINT64_KEY)
         if(memoize_table->body[i].key && memoize_table->body[i].value) {
             bfree(memoize_table->body[i].key);
 #if !defined(USE_REASONLIST)
             bfree(memoize_table->body[i].value);
 #endif
         }
+#endif
     }
     hashtable_destroy(memoize_table);
 }

@@ -8,6 +8,7 @@
 #include "hashtable.h"
 #include "alloc.h"
 #include <assert.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -16,7 +17,12 @@
  */
 #if INTERFACE
 struct hashtable_entry {
+#if defined(USE_UINT64_KEY)
+    uint64_t key;
+    bool is_key;
+#else
     char* key;
+#endif
     void* value;
 };
 
@@ -27,27 +33,45 @@ struct hashtable {
 };
 #endif
 
-#define HASHTABLE_INITIAL_CAPACITY 4
+#define HASHTABLE_INITIAL_CAPACITY 6142
 
+#if defined(USE_UINT64_KEY)
+uint64_t hashtable_hash(uint64_t ul)
+{
+    uint64_t p = 0x5555555555555555ull;
+    uint64_t c = 17316035218449499591ull;
+    uint64_t ul2 = p * (ul ^ (ul >> 32));
+    return c * (ul2 ^ (ul2 >> 32));
+}
+#else
 /**
  * Compute the hash value for the given string.
  * Implements the djb k=33 hash function.
  */
-unsigned long hashtable_hash(char* str)
+uint64_t hashtable_hash(char* str)
 {
-    unsigned long hash = 5381;
+    uint64_t hash = 5381;
     int c;
     while((c = *str++)) hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
     return hash;
 }
+#endif
 
 /**
  * Find an available slot for the given key, using linear probing.
  */
+#if defined(USE_UINT64_KEY)
+unsigned int hashtable_find_slot(hashtable* t, uint64_t key)
+#else
 unsigned int hashtable_find_slot(hashtable* t, char* key)
+#endif
 {
     int index = hashtable_hash(key) % t->capacity;
+#if defined(USE_UINT64_KEY)
+    while(t->body[index].is_set != false && t->body[index].key != key) {
+#else
     while(t->body[index].key != NULL && strcmp(t->body[index].key, key) != 0) {
+#endif
         index = (index + 1) % t->capacity;
     }
     return index;
@@ -56,10 +80,18 @@ unsigned int hashtable_find_slot(hashtable* t, char* key)
 /**
  * Return the item associated with the given key, or NULL if not found.
  */
+#if defined(USE_UINT64_KEY)
+void* hashtable_get(hashtable* t, uint64_t key)
+#else
 void* hashtable_get(hashtable* t, char* key)
+#endif
 {
     int index = hashtable_find_slot(t, key);
+#if defined(USE_UINT64_KEY)
+    if(t->body[index].is_set != false) {
+#else
     if(t->body[index].key != NULL) {
+#endif
         return t->body[index].value;
     }
     else {
@@ -70,10 +102,18 @@ void* hashtable_get(hashtable* t, char* key)
 /**
  * Assign a value to the given key in the table.
  */
+#if defined(USE_UINT64_KEY)
+void hashtable_set(hashtable* t, uint64_t key, void* value)
+#else
 void hashtable_set(hashtable* t, char* key, void* value)
+#endif
 {
     int index = hashtable_find_slot(t, key);
+#if defined(USE_UINT64_KEY)
+    if(t->body[index].is_set != false) {
+#else
     if(t->body[index].key != NULL) {
+#endif
         /* Entry exists; update it. */
         t->body[index].value = value;
     }
@@ -87,18 +127,32 @@ void hashtable_set(hashtable* t, char* key, void* value)
         }
         t->body[index].key = key;
         t->body[index].value = value;
+#if defined(USE_UINT64_KEY)
+        t->body[index].is_set = true;
+#endif
     }
 }
 
 /**
  * Remove a key from the table
  */
+#if defined(USE_UINT64_KEY)
+void hashtable_remove(hashtable* t, uint64_t key)
+#else
 void hashtable_remove(hashtable* t, char* key)
+#endif
 {
     int index = hashtable_find_slot(t, key);
+#if defined(USE_UINT64_KEY)
+    if(t->body[index].is_set != false) {
+#else
     if(t->body[index].key != NULL) {
+#endif
         t->body[index].key = NULL;
         t->body[index].value = NULL;
+#if defined(USE_UINT64_KEY)
+        t->body[index].is_set = false;
+#endif
         t->size--;
     }
 }
@@ -137,7 +191,11 @@ void hashtable_resize(hashtable* t, unsigned int capacity)
 
     // Copy all the old values into the newly allocated body
     for(size_t i = 0; i < old_capacity; i++) {
+#if defined(USE_UINT64_KEY)
+        if(old_body[i].is_set != false) {
+#else
         if(old_body[i].key != NULL) {
+#endif
             hashtable_set(t, old_body[i].key, old_body[i].value);
         }
     }
