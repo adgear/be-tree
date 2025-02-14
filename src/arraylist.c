@@ -32,7 +32,7 @@ struct arraylist {
 #endif
 
 // Initial capacity of the arraylist
-#define ARRAYLIST_INITIAL_CAPACITY 32
+#define ARRAYLIST_INITIAL_CAPACITY 16
 
 /**
  * Macro to shift a section of memory by an offset, used when inserting or removing items.

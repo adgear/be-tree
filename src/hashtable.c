@@ -33,7 +33,7 @@ struct hashtable {
 };
 #endif
 
-#define HASHTABLE_INITIAL_CAPACITY 6142
+#define HASHTABLE_INITIAL_CAPACITY 4096
 
 #if defined(USE_UINT64_KEY)
 uint64_t hashtable_hash(uint64_t ul)
