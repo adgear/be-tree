@@ -23,14 +23,12 @@ unsigned int reasonlist_size(struct reasonlist* l)
 
 void reasonlist_additem(struct reasonlist* l, betree_var_t reason, betree_sub_t value)
 {
-    assert(reason >= 0);
     assert(reason < l->size);
     arraylist_add(l->body[reason], value);
 }
 
 void reasonlist_join(struct reasonlist* l, betree_var_t reason, struct arraylist* sub_ids)
 {
-    assert(reason >= 0);
     assert(reason < l->size);
     if(sub_ids->size > 0) arraylist_join(l->body[reason], sub_ids);
 }
@@ -40,7 +38,6 @@ void reasonlist_join(struct reasonlist* l, betree_var_t reason, struct arraylist
  */
 struct arraylist* reasonlist_get(struct reasonlist* l, betree_var_t reason)
 {
-    assert(reason >= 0);
     assert(reason < l->size);
     return l->body[reason];
 }

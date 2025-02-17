@@ -550,7 +550,7 @@ static bool match_equality_expr_err(const struct betree_variable** preds,
                 }
                 case AST_EQUALITY_VALUE_STRING: {
                     bool result = variable.string_value.str == equality_expr.value.string_value.str;
-                    if(result == false) return result;
+                    return result;
                 }
                 case AST_EQUALITY_VALUE_INTEGER_ENUM: {
                     bool result = variable.integer_enum_value.ienum

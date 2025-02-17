@@ -623,7 +623,7 @@ bool betree_make_sub_ids(struct betree_err* tree)
 bool betree_search_err(
     const struct betree_err* tree, const char* event_str, struct report_err* report)
 {
-    struct betree_event* event = make_event_from_string(tree, event_str);
+    struct betree_event* event = make_event_from_string_err(tree, event_str);
     bool result = betree_search_with_event_filled_err(tree, event, report);
     free_event(event);
     return result;
@@ -636,7 +636,7 @@ bool betree_search_ids_err(const struct betree_err* tree,
     const uint64_t* ids,
     size_t sz)
 {
-    struct betree_event* event = make_event_from_string(tree, event_str);
+    struct betree_event* event = make_event_from_string_err(tree, event_str);
     bool result = betree_search_with_event_filled_ids_err(tree, event, report, ids, sz);
     free_event(event);
     return result;

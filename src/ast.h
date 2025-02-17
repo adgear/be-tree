@@ -347,3 +347,5 @@ bool fast_eq_expr(const struct ast_node* a, const struct ast_node* b);
 bool all_variables_in_config(const struct config* config, const struct ast_node* node);
 bool all_bounded_strings_valid(const struct config* config, const struct ast_node* node);
 bool all_exprs_valid(const struct config* config, const struct ast_node* node);
+
+size_t next_low(const int64_t arr[], size_t low, size_t count, int64_t x);
