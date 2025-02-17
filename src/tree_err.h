@@ -10,7 +10,6 @@
 #include "memoize.h"
 #include "value.h"
 
-
 struct cnode_err;
 
 struct lnode_err {
@@ -61,22 +60,12 @@ struct pdir_err {
     };
 };
 
-void match_be_tree_err(
-#if defined(USE_REASONLIST)
-    const struct config* config,
-#else
-    const struct attr_domain** attr_domains,
-#endif
+void match_be_tree_err(const struct config* config,
     const struct betree_variable** preds,
     const struct cnode_err* cnode,
     struct subs_to_eval* subs,
     struct report_err* report);
-void match_be_tree_node_counting_err(
-#if defined(USE_REASONLIST)
-    const struct config* config,
-#else
-    const struct attr_domain** attr_domains,
-#endif
+void match_be_tree_node_counting_err(const struct config* config,
     const struct betree_variable** preds,
     const struct cnode_err* cnode,
     struct subs_to_eval* subs,
@@ -87,13 +76,9 @@ bool match_sub_err(size_t attr_domains_count,
     struct report_err* report,
     struct memoize* memoize,
     const uint64_t* undefined,
-#if defined(USE_REASONLIST)
     betree_var_t* last_reason,
-#else
-    char* last_reason,
-#endif
     struct attr_domain** attr_domains,
-    hashtable* memoize_table);
+    betree_var_t* memoize_reason);
 
 void add_sub_err(betree_sub_t id, struct report_err* report);
 
@@ -132,9 +117,5 @@ void build_sub_ids_cdir(struct cdir_err* cd);
 void build_sub_ids_cnode(struct cnode_err* cn);
 
 void set_reason_sub_id_lists(struct report_err* report,
-#if defined(USE_REASONLIST)
     betree_var_t reason,
-#else
-    const char* variable_name,
-#endif
     struct arraylist* sub_ids);

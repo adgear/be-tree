@@ -13,14 +13,8 @@ bool match_node_err(const struct betree_variable** preds,
     const struct ast_node* node,
     struct memoize* memoize,
     struct report_err* report,
-#if defined(USE_REASONLIST)
     betree_var_t* last_reason,
-    hashtable* memoize_table,
-    size_t attr_domains_count
-#else
-    char* last_reason,
-    hashtable* memoize_table
-#endif
-);
+    betree_var_t* memoize_reason,
+    size_t attr_domains_count);
 
 void set_reason_sub_id_list(char* last_reason, const char* variable_name);

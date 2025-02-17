@@ -49,55 +49,20 @@ static bool is_id_in(uint64_t id, const uint64_t* ids, size_t sz)
     return false;
 }
 
-static void add_reason_sub_id_list(struct report_err* report,
-#if defined(USE_REASONLIST)
-    betree_var_t reason,
-#else
-    const char* variable_name,
-#endif
-    betree_sub_t sub_id)
+static void add_reason_sub_id_list(
+    struct report_err* report, betree_var_t reason, betree_sub_t sub_id)
 {
-#if defined(USE_REASONLIST)
     reasonlist_additem(report->reason_sub_id_list, reason, sub_id);
-#else
-    arraylist* sub_id_list = NULL;
-
-    if((sub_id_list = hashtable_get(report->reason_sub_id_list, variable_name)) == NULL) {
-        sub_id_list = arraylist_create();
-        hashtable_set(report->reason_sub_id_list, bstrdup(variable_name), sub_id_list);
-    }
-    arraylist_add(sub_id_list, sub_id);
-#endif
 }
 
-void set_reason_sub_id_lists(struct report_err* report,
-#if defined(USE_REASONLIST)
-    betree_var_t reason,
-#else
-    const char* variable_name,
-#endif
-    struct arraylist* sub_ids)
+void set_reason_sub_id_lists(
+    struct report_err* report, betree_var_t reason, struct arraylist* sub_ids)
 {
     if(!sub_ids || sub_ids->size <= 0) return;
-#if defined(USE_REASONLIST)
     reasonlist_join(report->reason_sub_id_list, reason, sub_ids);
-#else
-    if(variable_name == NULL) variable_name = "NULL";
-    if(hashtable_get(report->reason_sub_id_list, variable_name) == NULL) {
-        arraylist* sub_id_list = arraylist_create();
-        hashtable_set(report->reason_sub_id_list, bstrdup(variable_name), sub_id_list);
-    }
-    if(sub_ids->size > 0)
-        arraylist_join(hashtable_get(report->reason_sub_id_list, variable_name), sub_ids);
-#endif
 }
 
-static void search_cdir_ids_err(
-#if defined(USE_REASONLIST)
-    const struct config* config,
-#else
-    const struct attr_domain** attr_domains,
-#endif
+static void search_cdir_ids_err(const struct config* config,
     const struct betree_variable** preds,
     struct cdir_err* cdir,
     struct subs_to_eval* subs,
@@ -124,12 +89,7 @@ static enum short_circuit_e try_short_circuit_err(size_t attr_domains_count,
     const struct short_circuit* short_circuit,
     const uint64_t* undefined,
     struct attr_domain** attr_domains,
-#if defined(USE_REASONLIST)
-    betree_var_t* last_reason
-#else
-    char* last_reason
-#endif
-)
+    betree_var_t* last_reason)
 {
     size_t count = attr_domains_count / 64 + 1;
     for(size_t i = 0; i < count; i++) {
@@ -141,11 +101,7 @@ static enum short_circuit_e try_short_circuit_err(size_t attr_domains_count,
         if(fail) {
             for(size_t j = 0; j < attr_domains_count; j++) {
                 if((1 << (j % 64) & short_circuit->fail[i]) && (1 << (j % 64) & undefined[i])) {
-#if defined(USE_REASONLIST)
                     *last_reason = j;
-#else
-                    set_reason_sub_id_list(last_reason, attr_domains[j]->attr_var.attr);
-#endif
                     break;
                 }
             }
@@ -155,35 +111,15 @@ static enum short_circuit_e try_short_circuit_err(size_t attr_domains_count,
     return SHORT_CIRCUIT_NONE;
 }
 
-
-static void free_memoize_table(hashtable* memoize_table)
-{
-    for(size_t i = 0; i < memoize_table->capacity; i++) {
-#if !defined(USE_UINT64_KEY)
-        if(memoize_table->body[i].key && memoize_table->body[i].value) {
-            bfree(memoize_table->body[i].key);
-#if !defined(USE_REASONLIST)
-            bfree(memoize_table->body[i].value);
-#endif
-        }
-#endif
-    }
-    hashtable_destroy(memoize_table);
-}
-
 bool match_sub_err(size_t attr_domains_count,
     const struct betree_variable** preds,
     const struct betree_sub* sub,
     struct report_err* report,
     struct memoize* memoize,
     const uint64_t* undefined,
-#if defined(USE_REASONLIST)
     betree_var_t* last_reason,
-#else
-    char* last_reason,
-#endif
     struct attr_domain** attr_domains,
-    hashtable* memoize_table)
+    betree_var_t* memoize_reason)
 {
     enum short_circuit_e short_circuit = try_short_circuit_err(
         attr_domains_count, &sub->short_circuit, undefined, attr_domains, last_reason);
@@ -198,12 +134,8 @@ bool match_sub_err(size_t attr_domains_count,
             return false;
         }
     }
-#if defined(USE_REASONLIST)
     bool result = match_node_err(
-        preds, sub->expr, memoize, report, last_reason, memoize_table, attr_domains_count);
-#else
-    bool result = match_node_err(preds, sub->expr, memoize, report, last_reason, memoize_table);
-#endif
+        preds, sub->expr, memoize, report, last_reason, memoize_reason, attr_domains_count);
 
     return result;
 }
@@ -251,12 +183,7 @@ static struct pnode_err* search_pdir_err(betree_var_t variable_id, const struct 
     return NULL;
 }
 
-static void search_cdir_err(
-#if defined(USE_REASONLIST)
-    const struct config* config,
-#else
-    const struct attr_domain** attr_domains,
-#endif
+static void search_cdir_err(const struct config* config,
     const struct betree_variable** preds,
     struct cdir_err* cdir,
     struct subs_to_eval* subs,
@@ -264,12 +191,7 @@ static void search_cdir_err(
     bool open_right,
     struct report_err* report);
 
-static void search_cdir_node_counting_err(
-#if defined(USE_REASONLIST)
-    const struct config* config,
-#else
-    const struct attr_domain** attr_domains,
-#endif
+static void search_cdir_node_counting_err(const struct config* config,
     const struct betree_variable** preds,
     struct cdir_err* cdir,
     struct subs_to_eval* subs,
@@ -282,20 +204,13 @@ static bool event_contains_variable(const struct betree_variable** preds, betree
     return preds[variable_id] != NULL;
 }
 
-void match_be_tree_err(
-#if defined(USE_REASONLIST)
-    const struct config* config,
-#else
-    const struct attr_domain** attr_domains,
-#endif
+void match_be_tree_err(const struct config* config,
     const struct betree_variable** preds,
     const struct cnode_err* cnode,
     struct subs_to_eval* subs,
     struct report_err* report)
 {
-#if defined(USE_REASONLIST)
     const struct attr_domain** attr_domains = (const struct attr_domain**)config->attr_domains;
-#endif
     check_sub_err(cnode->lnode, subs);
     if(cnode->pdir != NULL) {
         for(size_t i = 0; i < cnode->pdir->pnode_count; i++) {
@@ -304,22 +219,13 @@ void match_be_tree_err(
                 = get_attr_domain(attr_domains, pnode->attr_var.var);
             if(attr_domain->allow_undefined
                 || event_contains_variable(preds, pnode->attr_var.var)) {
-#if defined(USE_REASONLIST)
                 search_cdir_err(config, preds, pnode->cdir, subs, true, true, report);
-#else
-                search_cdir_err(attr_domains, preds, pnode->cdir, subs, true, true, report);
-#endif
             }
         }
     }
 }
 
-static void match_be_tree_ids_err(
-#if defined(USE_REASONLIST)
-    const struct config* config,
-#else
-    const struct attr_domain** attr_domains,
-#endif
+static void match_be_tree_ids_err(const struct config* config,
     const struct betree_variable** preds,
     const struct cnode_err* cnode,
     struct subs_to_eval* subs,
@@ -327,9 +233,7 @@ static void match_be_tree_ids_err(
     size_t sz,
     struct report_err* report)
 {
-#if defined(USE_REASONLIST)
     const struct attr_domain** attr_domains = (const struct attr_domain**)config->attr_domains;
-#endif
     check_sub_ids_err(cnode->lnode, subs, ids, sz);
     if(cnode->pdir != NULL) {
         for(size_t i = 0; i < cnode->pdir->pnode_count; i++) {
@@ -345,20 +249,13 @@ static void match_be_tree_ids_err(
     }
 }
 
-void match_be_tree_node_counting_err(
-#if defined(USE_REASONLIST)
-    const struct config* config,
-#else
-    const struct attr_domain** attr_domains,
-#endif
+void match_be_tree_node_counting_err(const struct config* config,
     const struct betree_variable** preds,
     const struct cnode_err* cnode,
     struct subs_to_eval* subs,
     int* node_count)
 {
-#if defined(USE_REASONLIST)
     const struct attr_domain** attr_domains = (const struct attr_domain**)config->attr_domains;
-#endif
     check_sub_node_counting_err(cnode->lnode, subs, node_count);
     if(cnode->pdir != NULL) {
         for(size_t i = 0; i < cnode->pdir->pnode_count; i++) {
@@ -479,12 +376,7 @@ bool sub_is_enclosed_err(const struct attr_domain** attr_domains,
     return false;
 }
 
-static void search_cdir_err(
-#if defined(USE_REASONLIST)
-    const struct config* config,
-#else
-    const struct attr_domain** attr_domains,
-#endif
+static void search_cdir_err(const struct config* config,
     const struct betree_variable** preds,
     struct cdir_err* cdir,
     struct subs_to_eval* subs,
@@ -492,61 +384,28 @@ static void search_cdir_err(
     bool open_right,
     struct report_err* report)
 {
-#if defined(USE_REASONLIST)
     match_be_tree_err(config, preds, cdir->cnode, subs, report);
-#else
-    match_be_tree_err(attr_domains, preds, cdir->cnode, subs, report);
-#endif
     if(is_event_enclosed_err(preds, cdir->lchild, open_left, false)) {
-#if defined(USE_REASONLIST)
         search_cdir_err(config, preds, cdir->lchild, subs, open_left, false, report);
-#else
-        search_cdir_err(attr_domains, preds, cdir->lchild, subs, open_left, false, report);
-#endif
     }
     else {
         if(cdir->lchild && cdir->lchild->sub_ids->size > 0) {
-#if defined(USE_REASONLIST)
             betree_var_t attr_var = find_pnode_attr_name(cdir);
             reasonlist_join(report->reason_sub_id_list, attr_var, cdir->lchild->sub_ids);
-#else
-            const char* attr_name = find_pnode_attr_name(cdir);
-            if(attr_name != NULL)
-                set_reason_sub_id_lists(report, attr_name, cdir->lchild->sub_ids);
-            else
-                set_reason_sub_id_lists(report, "no_reason", cdir->lchild->sub_ids);
-#endif
         }
     }
     if(is_event_enclosed_err(preds, cdir->rchild, false, open_right)) {
-#if defined(USE_REASONLIST)
         search_cdir_err(config, preds, cdir->rchild, subs, false, open_right, report);
-#else
-        search_cdir_err(attr_domains, preds, cdir->rchild, subs, false, open_right, report);
-#endif
     }
     else {
         if(cdir->rchild && cdir->rchild->sub_ids->size > 0) {
-#if defined(USE_REASONLIST)
             betree_var_t attr_var = find_pnode_attr_name(cdir);
             reasonlist_join(report->reason_sub_id_list, attr_var, cdir->rchild->sub_ids);
-#else
-            const char* attr_name = find_pnode_attr_name(cdir);
-            if(attr_name != NULL)
-                set_reason_sub_id_lists(report, attr_name, cdir->rchild->sub_ids);
-            else
-                set_reason_sub_id_lists(report, "no_reason", cdir->rchild->sub_ids);
-#endif
         }
     }
 }
 
-static void search_cdir_ids_err(
-#if defined(USE_REASONLIST)
-    const struct config* config,
-#else
-    const struct attr_domain** attr_domains,
-#endif
+static void search_cdir_ids_err(const struct config* config,
     const struct betree_variable** preds,
     struct cdir_err* cdir,
     struct subs_to_eval* subs,
@@ -556,63 +415,28 @@ static void search_cdir_ids_err(
     size_t sz,
     struct report_err* report)
 {
-#if defined(USE_REASONLIST)
     match_be_tree_ids_err(config, preds, cdir->cnode, subs, ids, sz, report);
-#else
-    match_be_tree_ids_err(attr_domains, preds, cdir->cnode, subs, ids, sz, report);
-#endif
     if(is_event_enclosed_err(preds, cdir->lchild, open_left, false)) {
-#if defined(USE_REASONLIST)
         search_cdir_ids_err(config, preds, cdir->lchild, subs, open_left, false, ids, sz, report);
-#else
-        search_cdir_ids_err(
-            attr_domains, preds, cdir->lchild, subs, open_left, false, ids, sz, report);
-#endif
     }
     else {
         if(cdir->lchild && cdir->lchild->sub_ids->size > 0) {
-#if defined(USE_REASONLIST)
             betree_var_t attr_var = find_pnode_attr_name(cdir);
             reasonlist_join(report->reason_sub_id_list, attr_var, cdir->lchild->sub_ids);
-#else
-            const char* attr_name = find_pnode_attr_name(cdir);
-            if(attr_name != NULL)
-                set_reason_sub_id_lists(report, attr_name, cdir->lchild->sub_ids);
-            else
-                set_reason_sub_id_lists(report, "no_reason", cdir->lchild->sub_ids);
-#endif
         }
     }
     if(is_event_enclosed_err(preds, cdir->rchild, false, open_right)) {
-#if defined(USE_REASONLIST)
         search_cdir_ids_err(config, preds, cdir->rchild, subs, false, open_right, ids, sz, report);
-#else
-        search_cdir_ids_err(
-            attr_domains, preds, cdir->rchild, subs, false, open_right, ids, sz, report);
-#endif
     }
     else {
         if(cdir->rchild && cdir->rchild->sub_ids->size > 0) {
-#if defined(USE_REASONLIST)
             betree_var_t attr_var = find_pnode_attr_name(cdir);
             reasonlist_join(report->reason_sub_id_list, attr_var, cdir->rchild->sub_ids);
-#else
-            const char* attr_name = find_pnode_attr_name(cdir);
-            if(attr_name != NULL)
-                set_reason_sub_id_lists(report, attr_name, cdir->rchild->sub_ids);
-            else
-                set_reason_sub_id_lists(report, "no_reason", cdir->rchild->sub_ids);
-#endif
         }
     }
 }
 
-static void search_cdir_node_counting_err(
-#if defined(USE_REASONLIST)
-    const struct config* config,
-#else
-    const struct attr_domain** attr_domains,
-#endif
+static void search_cdir_node_counting_err(const struct config* config,
     const struct betree_variable** preds,
     struct cdir_err* cdir,
     struct subs_to_eval* subs,
@@ -620,28 +444,14 @@ static void search_cdir_node_counting_err(
     bool open_right,
     int* node_count)
 {
-#if defined(USE_REASONLIST)
     match_be_tree_node_counting_err(config, preds, cdir->cnode, subs, node_count);
-#else
-    match_be_tree_node_counting_err(attr_domains, preds, cdir->cnode, subs, node_count);
-#endif
     if(is_event_enclosed_err(preds, cdir->lchild, open_left, false)) {
-#if defined(USE_REASONLIST)
         search_cdir_node_counting_err(
             config, preds, cdir->lchild, subs, open_left, false, node_count);
-#else
-        search_cdir_node_counting_err(
-            attr_domains, preds, cdir->lchild, subs, open_left, false, node_count);
-#endif
     }
     if(is_event_enclosed_err(preds, cdir->rchild, false, open_right)) {
-#if defined(USE_REASONLIST)
         search_cdir_node_counting_err(
             config, preds, cdir->rchild, subs, false, open_right, node_count);
-#else
-        search_cdir_node_counting_err(
-            attr_domains, preds, cdir->rchild, subs, false, open_right, node_count);
-#endif
     }
 }
 
@@ -1727,21 +1537,13 @@ static void fill_short_circuit(struct config* config, struct betree_sub* sub)
 int parse(const char* text, struct ast_node** node);
 int event_parse(const char* text, struct betree_event** event);
 
-#if defined(USE_REASONLIST)
 betree_var_t find_pnode_attr_name(struct cdir_err* cdir)
-#else
-const char* find_pnode_attr_name(struct cdir_err* cdir)
-#endif
 {
     if(!cdir) return NULL;
     struct cdir_err* pcd = cdir;
     while(pcd && pcd->parent_type != CNODE_PARENT_PNODE) pcd = pcd->cdir_parent;
     if(!pcd || !pcd->pnode_parent) return NULL;
-#if defined(USE_REASONLIST)
     return pcd->pnode_parent->attr_var.var;
-#else
-    return pcd->pnode_parent->attr_var.attr;
-#endif
 }
 
 
@@ -1773,36 +1575,23 @@ bool betree_search_with_preds_err(const struct config* config,
 {
     uint64_t* undefined = make_undefined(config->attr_domain_count, preds);
     struct memoize memoize = make_memoize(config->pred_map->memoize_count);
+    betree_var_t* memoize_reason = bmalloc(sizeof(betree_var_t) * config->pred_map->pred_count);
     struct subs_to_eval subs;
     init_subs_to_eval(&subs);
-#if defined(USE_REASONLIST)
     match_be_tree_err(config, preds, cnode, &subs, report);
-#else
-    match_be_tree_err(
-        (const struct attr_domain**)config->attr_domains, preds, cnode, &subs, report);
-#endif
-    hashtable* memoize_table = hashtable_create();
     for(size_t i = 0; i < subs.count; i++) {
         const struct betree_sub* sub = subs.subs[i];
         report->evaluated++;
-#if defined(USE_REASONLIST)
         betree_var_t last_reason;
-#else
-        char last_reason[512];
-#endif
         if(match_sub_err(config->attr_domain_count,
                preds,
                sub,
                report,
                &memoize,
                undefined,
-#if defined(USE_REASONLIST)
                &last_reason,
-#else
-               last_reason,
-#endif
                (struct attr_domain**)config->attr_domains,
-               memoize_table)
+               memoize_reason)
             == true) {
             add_sub_err(sub->id, report);
         }
@@ -1811,10 +1600,10 @@ bool betree_search_with_preds_err(const struct config* config,
         }
     }
     bfree(subs.subs);
+    bfree(memoize_reason);
     free_memoize(memoize);
     bfree(undefined);
     bfree(preds);
-    free_memoize_table(memoize_table);
     return true;
 }
 
@@ -1828,36 +1617,23 @@ bool betree_search_with_preds_ids_err(const struct config* config,
 {
     uint64_t* undefined = make_undefined(config->attr_domain_count, preds);
     struct memoize memoize = make_memoize(config->pred_map->memoize_count);
+    betree_var_t* memoize_reason = bmalloc(sizeof(betree_var_t) * config->pred_map->pred_count);
     struct subs_to_eval subs;
     init_subs_to_eval(&subs);
-#if defined(USE_REASONLIST)
     match_be_tree_ids_err((const struct config*)config, preds, cnode, &subs, ids, sz, report);
-#else
-    match_be_tree_ids_err(
-        (const struct attr_domain**)config->attr_domains, preds, cnode, &subs, ids, sz, report);
-#endif
-    hashtable* memoize_table = hashtable_create();
     for(size_t i = 0; i < subs.count; i++) {
         const struct betree_sub* sub = subs.subs[i];
         report->evaluated++;
-#if defined(USE_REASONLIST)
         betree_var_t last_reason;
-#else
-        char last_reason[512];
-#endif
         if(match_sub_err(config->attr_domain_count,
                preds,
                sub,
                report,
                &memoize,
                undefined,
-#if defined(USE_REASONLIST)
                &last_reason,
-#else
-               last_reason,
-#endif
                (struct attr_domain**)config->attr_domains,
-               memoize_table)
+               memoize_reason)
             == true) {
             add_sub_err(sub->id, report);
         }
@@ -1866,10 +1642,10 @@ bool betree_search_with_preds_ids_err(const struct config* config,
         }
     }
     bfree(subs.subs);
+    bfree(memoize_reason);
     free_memoize(memoize);
     bfree(undefined);
     bfree(preds);
-    free_memoize_table(memoize_table);
     return true;
 }
 

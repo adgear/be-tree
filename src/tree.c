@@ -21,7 +21,9 @@
 static void search_cdir_ids(const struct attr_domain** attr_domains,
     const struct betree_variable** preds,
     struct cdir* cdir,
-    struct subs_to_eval* subs, bool open_left, bool open_right,
+    struct subs_to_eval* subs,
+    bool open_left,
+    bool open_right,
     const uint64_t* ids,
     size_t sz);
 
@@ -56,8 +58,8 @@ static void add_sub_to_eval(struct betree_sub* sub, struct subs_to_eval* subs)
 
 enum short_circuit_e { SHORT_CIRCUIT_PASS, SHORT_CIRCUIT_FAIL, SHORT_CIRCUIT_NONE };
 
-static enum short_circuit_e try_short_circuit(size_t attr_domains_count,
-    const struct short_circuit* short_circuit, const uint64_t* undefined)
+static enum short_circuit_e try_short_circuit(
+    size_t attr_domains_count, const struct short_circuit* short_circuit, const uint64_t* undefined)
 {
     size_t count = attr_domains_count / 64 + 1;
     for(size_t i = 0; i < count; i++) {
@@ -80,7 +82,8 @@ bool match_sub(size_t attr_domains_count,
     struct memoize* memoize,
     const uint64_t* undefined)
 {
-    enum short_circuit_e short_circuit = try_short_circuit(attr_domains_count, &sub->short_circuit, undefined);
+    enum short_circuit_e short_circuit
+        = try_short_circuit(attr_domains_count, &sub->short_circuit, undefined);
     if(short_circuit != SHORT_CIRCUIT_NONE) {
         if(report != NULL) {
             report->shorted++;
@@ -103,7 +106,8 @@ bool match_sub_counting(size_t attr_domains_count,
     struct memoize* memoize,
     const uint64_t* undefined)
 {
-    enum short_circuit_e short_circuit = try_short_circuit(attr_domains_count, &sub->short_circuit, undefined);
+    enum short_circuit_e short_circuit
+        = try_short_circuit(attr_domains_count, &sub->short_circuit, undefined);
     if(short_circuit != SHORT_CIRCUIT_NONE) {
         if(report != NULL) {
             report->shorted++;
@@ -127,8 +131,8 @@ static void check_sub(const struct lnode* lnode, struct subs_to_eval* subs)
     }
 }
 
-static void check_sub_ids(const struct lnode* lnode, struct subs_to_eval* subs,
-    const uint64_t* ids, size_t sz)
+static void check_sub_ids(
+    const struct lnode* lnode, struct subs_to_eval* subs, const uint64_t* ids, size_t sz)
 {
     for(size_t i = 0; i < lnode->sub_count; i++) {
         struct betree_sub* sub = lnode->subs[i];
@@ -138,7 +142,8 @@ static void check_sub_ids(const struct lnode* lnode, struct subs_to_eval* subs,
     }
 }
 
-static void check_sub_node_counting(const struct lnode* lnode, struct subs_to_eval* subs, int* node_count)
+static void check_sub_node_counting(
+    const struct lnode* lnode, struct subs_to_eval* subs, int* node_count)
 {
     for(size_t i = 0; i < lnode->sub_count; i++) {
         struct betree_sub* sub = lnode->subs[i];
@@ -164,12 +169,17 @@ static struct pnode* search_pdir(betree_var_t variable_id, const struct pdir* pd
 static void search_cdir(const struct attr_domain** attr_domains,
     const struct betree_variable** preds,
     struct cdir* cdir,
-    struct subs_to_eval* subs, bool open_left, bool open_right);
+    struct subs_to_eval* subs,
+    bool open_left,
+    bool open_right);
 
 static void search_cdir_node_counting(const struct attr_domain** attr_domains,
     const struct betree_variable** preds,
     struct cdir* cdir,
-    struct subs_to_eval* subs, bool open_left, bool open_right, int* node_count);
+    struct subs_to_eval* subs,
+    bool open_left,
+    bool open_right,
+    int* node_count);
 
 static bool event_contains_variable(const struct betree_variable** preds, betree_var_t variable_id)
 {
@@ -220,7 +230,8 @@ static void match_be_tree_ids(const struct attr_domain** attr_domains,
 void match_be_tree_node_counting(const struct attr_domain** attr_domains,
     const struct betree_variable** preds,
     const struct cnode* cnode,
-    struct subs_to_eval* subs, int* node_count)
+    struct subs_to_eval* subs,
+    int* node_count)
 {
     check_sub_node_counting(cnode->lnode, subs, node_count);
     if(cnode->pdir != NULL) {
@@ -230,7 +241,8 @@ void match_be_tree_node_counting(const struct attr_domain** attr_domains,
                 = get_attr_domain(attr_domains, pnode->attr_var.var);
             if(attr_domain->allow_undefined
                 || event_contains_variable(preds, pnode->attr_var.var)) {
-                search_cdir_node_counting(attr_domains, preds, pnode->cdir, subs, true, true, node_count);
+                search_cdir_node_counting(
+                    attr_domains, preds, pnode->cdir, subs, true, true, node_count);
             }
             ++*node_count;
         }
@@ -238,7 +250,8 @@ void match_be_tree_node_counting(const struct attr_domain** attr_domains,
     }
 }
 
-static bool is_event_enclosed(const struct betree_variable** preds, const struct cdir* cdir, bool open_left, bool open_right)
+static bool is_event_enclosed(
+    const struct betree_variable** preds, const struct cdir* cdir, bool open_left, bool open_right)
 {
     if(cdir == NULL) {
         return false;
@@ -250,19 +263,25 @@ static bool is_event_enclosed(const struct betree_variable** preds, const struct
     // No open_left for smin because it's always 0
     switch(pred->value.value_type) {
         case BETREE_BOOLEAN:
-            return (cdir->bound.bmin <= pred->value.boolean_value) && (cdir->bound.bmax >= pred->value.boolean_value);
+            return (cdir->bound.bmin <= pred->value.boolean_value)
+                && (cdir->bound.bmax >= pred->value.boolean_value);
         case BETREE_INTEGER:
-            return (open_left || cdir->bound.imin <= pred->value.integer_value) && (open_right || cdir->bound.imax >= pred->value.integer_value);
+            return (open_left || cdir->bound.imin <= pred->value.integer_value)
+                && (open_right || cdir->bound.imax >= pred->value.integer_value);
         case BETREE_FLOAT:
-            return (open_left || cdir->bound.fmin <= pred->value.float_value) && (open_right || cdir->bound.fmax >= pred->value.float_value);
+            return (open_left || cdir->bound.fmin <= pred->value.float_value)
+                && (open_right || cdir->bound.fmax >= pred->value.float_value);
         case BETREE_STRING:
-            return (cdir->bound.smin <= pred->value.string_value.str) && (open_right || cdir->bound.smax >= pred->value.string_value.str);
+            return (cdir->bound.smin <= pred->value.string_value.str)
+                && (open_right || cdir->bound.smax >= pred->value.string_value.str);
         case BETREE_INTEGER_ENUM:
-            return (cdir->bound.smin <= pred->value.integer_enum_value.ienum) && (open_right || cdir->bound.smax >= pred->value.integer_enum_value.ienum);
+            return (cdir->bound.smin <= pred->value.integer_enum_value.ienum)
+                && (open_right || cdir->bound.smax >= pred->value.integer_enum_value.ienum);
         case BETREE_INTEGER_LIST:
             if(pred->value.integer_list_value->count != 0) {
                 int64_t min = pred->value.integer_list_value->integers[0];
-                int64_t max = pred->value.integer_list_value->integers[pred->value.integer_list_value->count - 1];
+                int64_t max = pred->value.integer_list_value
+                                  ->integers[pred->value.integer_list_value->count - 1];
                 int64_t bound_min = open_left ? INT64_MIN : cdir->bound.imin;
                 int64_t bound_max = open_right ? INT64_MAX : cdir->bound.imax;
                 return min <= bound_max && bound_min <= max;
@@ -273,7 +292,9 @@ static bool is_event_enclosed(const struct betree_variable** preds, const struct
         case BETREE_STRING_LIST:
             if(pred->value.string_list_value->count != 0) {
                 size_t min = pred->value.string_list_value->strings[0].str;
-                size_t max = pred->value.string_list_value->strings[pred->value.string_list_value->count - 1].str;
+                size_t max = pred->value.string_list_value
+                                 ->strings[pred->value.string_list_value->count - 1]
+                                 .str;
                 size_t bound_min = cdir->bound.smin;
                 size_t bound_max = open_right ? SIZE_MAX : cdir->bound.smax;
                 return min <= bound_max && bound_min <= max;
@@ -284,12 +305,14 @@ static bool is_event_enclosed(const struct betree_variable** preds, const struct
         case BETREE_SEGMENTS:
         case BETREE_FREQUENCY_CAPS:
             return true;
-        default: abort();
+        default:
+            abort();
     }
     return false;
 }
 
-bool sub_is_enclosed(const struct attr_domain** attr_domains, const struct betree_sub* sub, const struct cdir* cdir)
+bool sub_is_enclosed(
+    const struct attr_domain** attr_domains, const struct betree_sub* sub, const struct cdir* cdir)
 {
     if(cdir == NULL) {
         return false;
@@ -312,17 +335,16 @@ bool sub_is_enclosed(const struct attr_domain** attr_domains, const struct betre
             case(BETREE_INTEGER_ENUM):
                 return cdir->bound.smin <= bound.smin && cdir->bound.smax >= bound.smax;
             case(BETREE_SEGMENTS): {
-                fprintf(
-                    stderr, "%s a segments value cdir should never happen for now\n", __func__);
+                fprintf(stderr, "%s a segments value cdir should never happen for now\n", __func__);
                 abort();
             }
             case(BETREE_FREQUENCY_CAPS): {
-                fprintf(stderr,
-                    "%s a frequency value cdir should never happen for now\n",
-                    __func__);
+                fprintf(
+                    stderr, "%s a frequency value cdir should never happen for now\n", __func__);
                 abort();
             }
-            default: abort();
+            default:
+                abort();
         }
     }
     return false;
@@ -331,7 +353,9 @@ bool sub_is_enclosed(const struct attr_domain** attr_domains, const struct betre
 static void search_cdir(const struct attr_domain** attr_domains,
     const struct betree_variable** preds,
     struct cdir* cdir,
-    struct subs_to_eval* subs, bool open_left, bool open_right)
+    struct subs_to_eval* subs,
+    bool open_left,
+    bool open_right)
 {
     match_be_tree(attr_domains, preds, cdir->cnode, subs);
     if(is_event_enclosed(preds, cdir->lchild, open_left, false)) {
@@ -345,7 +369,9 @@ static void search_cdir(const struct attr_domain** attr_domains,
 static void search_cdir_ids(const struct attr_domain** attr_domains,
     const struct betree_variable** preds,
     struct cdir* cdir,
-    struct subs_to_eval* subs, bool open_left, bool open_right,
+    struct subs_to_eval* subs,
+    bool open_left,
+    bool open_right,
     const uint64_t* ids,
     size_t sz)
 {
@@ -361,14 +387,19 @@ static void search_cdir_ids(const struct attr_domain** attr_domains,
 static void search_cdir_node_counting(const struct attr_domain** attr_domains,
     const struct betree_variable** preds,
     struct cdir* cdir,
-    struct subs_to_eval* subs, bool open_left, bool open_right, int* node_count)
+    struct subs_to_eval* subs,
+    bool open_left,
+    bool open_right,
+    int* node_count)
 {
     match_be_tree_node_counting(attr_domains, preds, cdir->cnode, subs, node_count);
     if(is_event_enclosed(preds, cdir->lchild, open_left, false)) {
-        search_cdir_node_counting(attr_domains, preds, cdir->lchild, subs, open_left, false, node_count);
+        search_cdir_node_counting(
+            attr_domains, preds, cdir->lchild, subs, open_left, false, node_count);
     }
     if(is_event_enclosed(preds, cdir->rchild, false, open_right)) {
-        search_cdir_node_counting(attr_domains, preds, cdir->rchild, subs, false, open_right, node_count);
+        search_cdir_node_counting(
+            attr_domains, preds, cdir->rchild, subs, false, open_right, node_count);
     }
 }
 
@@ -408,7 +439,8 @@ static bool is_used_cdir(betree_var_t variable_id, const struct cdir* cdir)
         case CNODE_PARENT_CDIR: {
             return is_used_cdir(variable_id, cdir->cdir_parent);
         }
-        default: abort();
+        default:
+            abort();
     }
 }
 
@@ -542,8 +574,10 @@ static void update_partition_score(const struct attr_domain** attr_domains, stru
     pnode->score = get_pnode_score(attr_domains, pnode);
 }
 
-bool insert_be_tree(
-    const struct config* config, const struct betree_sub* sub, struct cnode* cnode, struct cdir* cdir)
+bool insert_be_tree(const struct config* config,
+    const struct betree_sub* sub,
+    struct cnode* cnode,
+    struct cdir* cdir)
 {
     if(config == NULL) {
         fprintf(stderr, "Config is NULL, required to insert in the be tree\n");
@@ -640,7 +674,8 @@ static bool remove_sub(betree_sub_t sub, struct lnode* lnode)
                 lnode->subs = NULL;
             }
             else {
-                struct betree_sub** subs = brealloc(lnode->subs, sizeof(*lnode->subs) * lnode->sub_count);
+                struct betree_sub** subs
+                    = brealloc(lnode->subs, sizeof(*lnode->subs) * lnode->sub_count);
                 if(subs == NULL) {
                     fprintf(stderr, "%s brealloc failed\n", __func__);
                     abort();
@@ -668,8 +703,8 @@ static void move(const struct betree_sub* sub, struct lnode* origin, struct lnod
         }
     }
     else {
-        struct betree_sub** subs
-            = brealloc(destination->subs, sizeof(*destination->subs) * (destination->sub_count + 1));
+        struct betree_sub** subs = brealloc(
+            destination->subs, sizeof(*destination->subs) * (destination->sub_count + 1));
         if(subs == NULL) {
             fprintf(stderr, "%s brealloc failed\n", __func__);
             abort();
@@ -829,7 +864,8 @@ static bool is_attr_used_in_parent_cdir(betree_var_t variable_id, const struct c
         case(CNODE_PARENT_PNODE): {
             return is_attr_used_in_parent_pnode(variable_id, cdir->pnode_parent);
         }
-        default: abort();
+        default:
+            abort();
     }
 }
 
@@ -876,7 +912,8 @@ static bool splitable_attr_domain(
         case BETREE_SEGMENTS:
         case BETREE_FREQUENCY_CAPS:
             return false;
-        default: abort();
+        default:
+            abort();
     }
 }
 
@@ -991,7 +1028,8 @@ static bool is_atomic(const struct cdir* cdir)
             fprintf(stderr, "%s a frequency value cdir should never happen for now\n", __func__);
             abort();
         }
-        default: abort();
+        default:
+            abort();
     }
 }
 
@@ -1096,7 +1134,7 @@ static struct value_bounds split_value_bound(struct value_bound bound)
             break;
         }
         case(BETREE_STRING):
-        case(BETREE_STRING_LIST): 
+        case(BETREE_STRING_LIST):
         case(BETREE_INTEGER_ENUM): {
             size_t start = bound.smin, end = bound.smax;
             lbound.smin = start;
@@ -1129,7 +1167,8 @@ static struct value_bounds split_value_bound(struct value_bound bound)
             fprintf(stderr, "%s a frequency value cdir should never happen for now\n", __func__);
             abort();
         }
-        default: abort();
+        default:
+            abort();
     }
     struct value_bounds bounds = { .lbound = lbound, .rbound = rbound };
     return bounds;
@@ -1153,11 +1192,13 @@ static void space_clustering(const struct config* config, struct cdir* cdir)
         cdir->rchild = create_cdir_with_cdir_parent(config, cdir, bounds.rbound);
         for(size_t i = 0; i < lnode->sub_count; i++) {
             const struct betree_sub* sub = lnode->subs[i];
-            if(sub_is_enclosed((const struct attr_domain**)config->attr_domains, sub, cdir->lchild)) {
+            if(sub_is_enclosed(
+                   (const struct attr_domain**)config->attr_domains, sub, cdir->lchild)) {
                 move(sub, lnode, cdir->lchild->cnode->lnode);
                 i--;
             }
-            else if(sub_is_enclosed((const struct attr_domain**)config->attr_domains, sub, cdir->rchild)) {
+            else if(sub_is_enclosed(
+                        (const struct attr_domain**)config->attr_domains, sub, cdir->rchild)) {
                 move(sub, lnode, cdir->rchild->cnode->lnode);
                 i--;
             }
@@ -1170,38 +1211,38 @@ static void space_clustering(const struct config* config, struct cdir* cdir)
 }
 
 /*static bool search_delete_cdir(size_t attr_domains_count,*/
-    /*const struct attr_domain** attr_domains, struct betree_sub* sub, struct cdir* cdir);*/
+/*const struct attr_domain** attr_domains, struct betree_sub* sub, struct cdir* cdir);*/
 
 /*static bool delete_sub_from_leaf(betree_sub_t sub, struct lnode* lnode)*/
 /*{*/
-    /*return remove_sub(sub, lnode);*/
+/*return remove_sub(sub, lnode);*/
 /*}*/
 
 /*static bool is_lnode_empty(const struct lnode* lnode)*/
 /*{*/
-    /*return lnode == NULL || lnode->sub_count == 0;*/
+/*return lnode == NULL || lnode->sub_count == 0;*/
 /*}*/
 
 /*static bool is_pdir_empty(const struct pdir* pdir)*/
 /*{*/
-    /*return pdir == NULL || pdir->pnode_count == 0;*/
+/*return pdir == NULL || pdir->pnode_count == 0;*/
 /*}*/
 
 /*static bool is_cnode_empty(const struct cnode* cnode)*/
 /*{*/
-    /*return cnode == NULL || (is_lnode_empty(cnode->lnode) && is_pdir_empty(cnode->pdir));*/
+/*return cnode == NULL || (is_lnode_empty(cnode->lnode) && is_pdir_empty(cnode->pdir));*/
 /*}*/
 
 /*static bool is_cdir_empty(const struct cdir* cdir)*/
 /*{*/
-    /*return cdir == NULL*/
-        /*|| (is_cnode_empty(cdir->cnode) && is_cdir_empty(cdir->lchild)*/
-               /*&& is_cdir_empty(cdir->rchild));*/
+/*return cdir == NULL*/
+/*|| (is_cnode_empty(cdir->cnode) && is_cdir_empty(cdir->lchild)*/
+/*&& is_cdir_empty(cdir->rchild));*/
 /*}*/
 
 /*static bool is_pnode_empty(const struct pnode* pnode)*/
 /*{*/
-    /*return pnode == NULL || (is_cdir_empty(pnode->cdir));*/
+/*return pnode == NULL || (is_cdir_empty(pnode->cdir));*/
 /*}*/
 
 static void free_pnode(struct pnode* pnode);
@@ -1302,28 +1343,28 @@ static void free_cdir(struct cdir* cdir)
 
 /*static void try_remove_pnode_from_parent(const struct pnode* pnode)*/
 /*{*/
-    /*struct pdir* pdir = pnode->parent;*/
-    /*for(size_t i = 0; i < pdir->pnode_count; i++) {*/
-        /*if(pnode == pdir->pnodes[i]) {*/
-            /*for(size_t j = i; j < pdir->pnode_count - 1; j++) {*/
-                /*pdir->pnodes[j] = pdir->pnodes[j + 1];*/
-            /*}*/
-            /*pdir->pnode_count--;*/
-            /*if(pdir->pnode_count == 0) {*/
-                /*bfree(pdir->pnodes);*/
-                /*pdir->pnodes = NULL;*/
-            /*}*/
-            /*else {*/
-                /*struct pnode** pnodes = brealloc(pdir->pnodes, sizeof(*pnodes) * pdir->pnode_count);*/
-                /*if(pnodes == NULL) {*/
-                    /*fprintf(stderr, "%s brealloc failed\n", __func__);*/
-                    /*abort();*/
-                /*}*/
-                /*pdir->pnodes = pnodes;*/
-            /*}*/
-            /*return;*/
-        /*}*/
-    /*}*/
+/*struct pdir* pdir = pnode->parent;*/
+/*for(size_t i = 0; i < pdir->pnode_count; i++) {*/
+/*if(pnode == pdir->pnodes[i]) {*/
+/*for(size_t j = i; j < pdir->pnode_count - 1; j++) {*/
+/*pdir->pnodes[j] = pdir->pnodes[j + 1];*/
+/*}*/
+/*pdir->pnode_count--;*/
+/*if(pdir->pnode_count == 0) {*/
+/*bfree(pdir->pnodes);*/
+/*pdir->pnodes = NULL;*/
+/*}*/
+/*else {*/
+/*struct pnode** pnodes = brealloc(pdir->pnodes, sizeof(*pnodes) * pdir->pnode_count);*/
+/*if(pnodes == NULL) {*/
+/*fprintf(stderr, "%s brealloc failed\n", __func__);*/
+/*abort();*/
+/*}*/
+/*pdir->pnodes = pnodes;*/
+/*}*/
+/*return;*/
+/*}*/
+/*}*/
 /*}*/
 
 static void free_pnode(struct pnode* pnode)
@@ -1338,46 +1379,46 @@ static void free_pnode(struct pnode* pnode)
 }
 
 /*bool betree_delete_inner(size_t attr_domains_count,*/
-    /*const struct attr_domain** attr_domains, struct betree_sub* sub, struct cnode* cnode)*/
+/*const struct attr_domain** attr_domains, struct betree_sub* sub, struct cnode* cnode)*/
 /*{*/
-    /*struct pnode* pnode = NULL;*/
-    /*bool isFound = delete_sub_from_leaf(sub->id, cnode->lnode);*/
-    /*if(!isFound) {*/
-        /*for(size_t i = 0; i < attr_domains_count; i++) {*/
-            /*if(test_bit(sub->attr_vars, i) == false) {*/
-                /*continue;*/
-            /*}*/
-            /*betree_var_t variable_id = i;*/
-            /*pnode = search_pdir(variable_id, cnode->pdir);*/
-            /*if(pnode != NULL) {*/
-                /*isFound = search_delete_cdir(attr_domains_count, attr_domains, sub, pnode->cdir);*/
-            /*}*/
-            /*if(isFound) {*/
-                /*break;*/
-            /*}*/
-        /*}*/
-    /*}*/
-    /*if(isFound) {*/
-        /*if(pnode != NULL && is_pnode_empty(pnode)) {*/
-            /*try_remove_pnode_from_parent(pnode);*/
-            /*free_pnode(pnode);*/
-        /*}*/
-        /*if(cnode != NULL && is_pdir_empty(cnode->pdir)) {*/
-            /*free_pdir(cnode->pdir);*/
-            /*cnode->pdir = NULL;*/
-        /*}*/
-        /*if(!is_root(cnode)) {*/
-            /*if(cnode != NULL && is_lnode_empty(cnode->lnode)) {*/
-                /*free_lnode(cnode->lnode);*/
-                /*cnode->lnode = NULL;*/
-            /*}*/
-            /*if(is_cnode_empty(cnode)) {*/
-                /*cnode->parent->cnode = NULL;*/
-                /*free_cnode(cnode);*/
-            /*}*/
-        /*}*/
-    /*}*/
-    /*return isFound;*/
+/*struct pnode* pnode = NULL;*/
+/*bool isFound = delete_sub_from_leaf(sub->id, cnode->lnode);*/
+/*if(!isFound) {*/
+/*for(size_t i = 0; i < attr_domains_count; i++) {*/
+/*if(test_bit(sub->attr_vars, i) == false) {*/
+/*continue;*/
+/*}*/
+/*betree_var_t variable_id = i;*/
+/*pnode = search_pdir(variable_id, cnode->pdir);*/
+/*if(pnode != NULL) {*/
+/*isFound = search_delete_cdir(attr_domains_count, attr_domains, sub, pnode->cdir);*/
+/*}*/
+/*if(isFound) {*/
+/*break;*/
+/*}*/
+/*}*/
+/*}*/
+/*if(isFound) {*/
+/*if(pnode != NULL && is_pnode_empty(pnode)) {*/
+/*try_remove_pnode_from_parent(pnode);*/
+/*free_pnode(pnode);*/
+/*}*/
+/*if(cnode != NULL && is_pdir_empty(cnode->pdir)) {*/
+/*free_pdir(cnode->pdir);*/
+/*cnode->pdir = NULL;*/
+/*}*/
+/*if(!is_root(cnode)) {*/
+/*if(cnode != NULL && is_lnode_empty(cnode->lnode)) {*/
+/*free_lnode(cnode->lnode);*/
+/*cnode->lnode = NULL;*/
+/*}*/
+/*if(is_cnode_empty(cnode)) {*/
+/*cnode->parent->cnode = NULL;*/
+/*free_cnode(cnode);*/
+/*}*/
+/*}*/
+/*}*/
+/*return isFound;*/
 /*}*/
 
 static struct betree_sub* find_sub_id_cdir(betree_sub_t id, struct cdir* cdir)
@@ -1423,64 +1464,64 @@ struct betree_sub* find_sub_id(betree_sub_t id, struct cnode* cnode)
 
 /*static bool is_empty(struct cdir* cdir)*/
 /*{*/
-    /*return is_cdir_empty(cdir);*/
+/*return is_cdir_empty(cdir);*/
 /*}*/
 
 /*static void remove_bucket(struct cdir* cdir)*/
 /*{*/
-    /*free_cdir(cdir);*/
+/*free_cdir(cdir);*/
 /*}*/
 
 /*static void try_remove_cdir_from_parent(struct cdir* cdir)*/
 /*{*/
-    /*switch(cdir->parent_type) {*/
-        /*case CNODE_PARENT_CDIR: {*/
-            /*if(cdir->cdir_parent->lchild == cdir) {*/
-                /*cdir->cdir_parent->lchild = NULL;*/
-            /*}*/
-            /*else if(cdir->cdir_parent->rchild == cdir) {*/
-                /*cdir->cdir_parent->rchild = NULL;*/
-            /*}*/
-            /*break;*/
-        /*}*/
-        /*case CNODE_PARENT_PNODE: {*/
-            /*cdir->pnode_parent->cdir = NULL;*/
-            /*break;*/
-        /*}*/
-        /*default: {*/
-            /*switch_default_error("Invalid cdir parent type");*/
-        /*}*/
-    /*}*/
+/*switch(cdir->parent_type) {*/
+/*case CNODE_PARENT_CDIR: {*/
+/*if(cdir->cdir_parent->lchild == cdir) {*/
+/*cdir->cdir_parent->lchild = NULL;*/
+/*}*/
+/*else if(cdir->cdir_parent->rchild == cdir) {*/
+/*cdir->cdir_parent->rchild = NULL;*/
+/*}*/
+/*break;*/
+/*}*/
+/*case CNODE_PARENT_PNODE: {*/
+/*cdir->pnode_parent->cdir = NULL;*/
+/*break;*/
+/*}*/
+/*default: {*/
+/*switch_default_error("Invalid cdir parent type");*/
+/*}*/
+/*}*/
 /*}*/
 
 /*static bool search_delete_cdir(size_t attr_domains_count,*/
-    /*const struct attr_domain** attr_domains, struct betree_sub* sub, struct cdir* cdir)*/
+/*const struct attr_domain** attr_domains, struct betree_sub* sub, struct cdir* cdir)*/
 /*{*/
-    /*bool isFound = false;*/
-    /*if(sub_is_enclosed(attr_domains, sub, cdir->lchild)) {*/
-        /*isFound = search_delete_cdir(attr_domains_count, attr_domains, sub, cdir->lchild);*/
-    /*}*/
-    /*else if(sub_is_enclosed(attr_domains, sub, cdir->rchild)) {*/
-        /*isFound = search_delete_cdir(attr_domains_count, attr_domains, sub, cdir->rchild);*/
-    /*}*/
-    /*else {*/
-        /*isFound = betree_delete_inner(attr_domains_count, attr_domains, sub, cdir->cnode);*/
-    /*}*/
-    /*if(isFound) {*/
-        /*if(is_empty(cdir->lchild)) {*/
-            /*remove_bucket(cdir->lchild);*/
-            /*cdir->lchild = NULL;*/
-        /*}*/
-        /*if(is_empty(cdir->rchild)) {*/
-            /*remove_bucket(cdir->rchild);*/
-            /*cdir->rchild = NULL;*/
-        /*}*/
-        /*if(is_empty(cdir)) {*/
-            /*try_remove_cdir_from_parent(cdir);*/
-            /*free_cdir(cdir);*/
-        /*}*/
-    /*}*/
-    /*return isFound;*/
+/*bool isFound = false;*/
+/*if(sub_is_enclosed(attr_domains, sub, cdir->lchild)) {*/
+/*isFound = search_delete_cdir(attr_domains_count, attr_domains, sub, cdir->lchild);*/
+/*}*/
+/*else if(sub_is_enclosed(attr_domains, sub, cdir->rchild)) {*/
+/*isFound = search_delete_cdir(attr_domains_count, attr_domains, sub, cdir->rchild);*/
+/*}*/
+/*else {*/
+/*isFound = betree_delete_inner(attr_domains_count, attr_domains, sub, cdir->cnode);*/
+/*}*/
+/*if(isFound) {*/
+/*if(is_empty(cdir->lchild)) {*/
+/*remove_bucket(cdir->lchild);*/
+/*cdir->lchild = NULL;*/
+/*}*/
+/*if(is_empty(cdir->rchild)) {*/
+/*remove_bucket(cdir->rchild);*/
+/*cdir->rchild = NULL;*/
+/*}*/
+/*if(is_empty(cdir)) {*/
+/*try_remove_cdir_from_parent(cdir);*/
+/*free_cdir(cdir);*/
+/*}*/
+/*}*/
+/*return isFound;*/
 /*}*/
 
 struct betree_variable* make_pred(const char* attr, betree_var_t variable_id, struct value value)
@@ -1522,7 +1563,8 @@ void fill_pred(struct betree_sub* sub, const struct ast_node* expr)
                 case AST_SPECIAL_SEGMENT:
                     fill_pred_attr_var(sub, expr->special_expr.segment.attr_var);
                     return;
-                default: abort();
+                default:
+                    abort();
             }
             return;
         }
@@ -1541,7 +1583,8 @@ void fill_pred(struct betree_sub* sub, const struct ast_node* expr)
                     return;
                 case AST_BOOL_LITERAL:
                     return;
-                default: abort();
+                default:
+                    abort();
             }
             return;
         }
@@ -1569,7 +1612,8 @@ void fill_pred(struct betree_sub* sub, const struct ast_node* expr)
             fill_pred_attr_var(sub, expr->list_expr.attr_var);
             return;
         }
-        default: abort();
+        default:
+            abort();
     }
 }
 
@@ -1655,8 +1699,10 @@ static enum short_circuit_e short_circuit_for_node(
         case AST_TYPE_SPECIAL_EXPR:
             switch(node->special_expr.type) {
                 case AST_SPECIAL_FREQUENCY: {
-                    enum short_circuit_e frequency = short_circuit_for_attr_var(id, inverted, node->special_expr.frequency.attr_var);
-                    enum short_circuit_e now = short_circuit_for_attr_var(id, inverted, node->special_expr.frequency.now);
+                    enum short_circuit_e frequency = short_circuit_for_attr_var(
+                        id, inverted, node->special_expr.frequency.attr_var);
+                    enum short_circuit_e now = short_circuit_for_attr_var(
+                        id, inverted, node->special_expr.frequency.now);
                     if(frequency == SHORT_CIRCUIT_FAIL || now == SHORT_CIRCUIT_FAIL) {
                         return SHORT_CIRCUIT_FAIL;
                     }
@@ -1666,8 +1712,10 @@ static enum short_circuit_e short_circuit_for_node(
                     return SHORT_CIRCUIT_NONE;
                 }
                 case AST_SPECIAL_SEGMENT: {
-                    enum short_circuit_e frequency = short_circuit_for_attr_var(id, inverted, node->special_expr.segment.attr_var);
-                    enum short_circuit_e now = short_circuit_for_attr_var(id, inverted, node->special_expr.segment.now);
+                    enum short_circuit_e frequency = short_circuit_for_attr_var(
+                        id, inverted, node->special_expr.segment.attr_var);
+                    enum short_circuit_e now
+                        = short_circuit_for_attr_var(id, inverted, node->special_expr.segment.now);
                     if(frequency == SHORT_CIRCUIT_FAIL || now == SHORT_CIRCUIT_FAIL) {
                         return SHORT_CIRCUIT_FAIL;
                     }
@@ -1677,8 +1725,10 @@ static enum short_circuit_e short_circuit_for_node(
                     return SHORT_CIRCUIT_NONE;
                 }
                 case AST_SPECIAL_GEO: {
-                    enum short_circuit_e latitude = short_circuit_for_attr_var(id, inverted, node->special_expr.geo.latitude_var);
-                    enum short_circuit_e longitude = short_circuit_for_attr_var(id, inverted, node->special_expr.geo.longitude_var);
+                    enum short_circuit_e latitude = short_circuit_for_attr_var(
+                        id, inverted, node->special_expr.geo.latitude_var);
+                    enum short_circuit_e longitude = short_circuit_for_attr_var(
+                        id, inverted, node->special_expr.geo.longitude_var);
                     if(latitude == SHORT_CIRCUIT_FAIL || longitude == SHORT_CIRCUIT_FAIL) {
                         return SHORT_CIRCUIT_FAIL;
                     }
@@ -1781,7 +1831,8 @@ void event_to_string(const struct betree_event* event, char* buffer)
         const char* attr = pred->attr_var.attr;
         switch(pred->value.value_type) {
             case(BETREE_INTEGER): {
-                length += sprintf(buffer + length, "%s = %" PRIu64, attr, pred->value.integer_value);
+                length
+                    += sprintf(buffer + length, "%s = %" PRIu64, attr, pred->value.integer_value);
                 break;
             }
             case(BETREE_FLOAT): {
@@ -1794,15 +1845,18 @@ void event_to_string(const struct betree_event* event, char* buffer)
                 break;
             }
             case(BETREE_STRING): {
-                length += sprintf(buffer + length, "%s = \"%s\"", attr, pred->value.string_value.string);
+                length += sprintf(
+                    buffer + length, "%s = \"%s\"", attr, pred->value.string_value.string);
                 break;
             }
             case(BETREE_INTEGER_ENUM): {
-                length += sprintf(buffer + length, "%s = %ld", attr, pred->value.integer_enum_value.integer);
+                length += sprintf(
+                    buffer + length, "%s = %ld", attr, pred->value.integer_enum_value.integer);
                 break;
             }
             case(BETREE_INTEGER_LIST): {
-                const char* integer_list = integer_list_value_to_string(pred->value.integer_list_value);
+                const char* integer_list
+                    = integer_list_value_to_string(pred->value.integer_list_value);
                 length += sprintf(buffer + length, "%s = (%s)", attr, integer_list);
                 bfree((char*)integer_list);
                 break;
@@ -1814,12 +1868,14 @@ void event_to_string(const struct betree_event* event, char* buffer)
                 break;
             }
             case(BETREE_STRING_LIST): {
-                const char* string_list = string_list_value_to_string(pred->value.string_list_value);
+                const char* string_list
+                    = string_list_value_to_string(pred->value.string_list_value);
                 length += sprintf(buffer + length, "%s = (%s)", attr, string_list);
                 bfree((char*)string_list);
                 break;
             }
-            default: abort();
+            default:
+                abort();
         }
     }
     buffer[length] = '\0';
@@ -1866,7 +1922,8 @@ uint64_t* make_undefined(size_t attr_domain_count, const struct betree_variable*
     return undefined;
 }
 
-uint64_t* make_undefined_with_count(size_t attr_domain_count, const struct betree_variable** preds, size_t* count)
+uint64_t* make_undefined_with_count(
+    size_t attr_domain_count, const struct betree_variable** preds, size_t* count)
 {
     *count = attr_domain_count / 64 + 1;
     uint64_t* undefined = bcalloc(*count * sizeof(*undefined));
@@ -1888,8 +1945,7 @@ void add_sub(betree_sub_t id, struct report* report)
         }
     }
     else {
-        betree_sub_t* subs
-            = brealloc(report->subs, sizeof(*report->subs) * (report->matched + 1));
+        betree_sub_t* subs = brealloc(report->subs, sizeof(*report->subs) * (report->matched + 1));
         if(subs == NULL) {
             fprintf(stderr, "%s brealloc failed", __func__);
             abort();
@@ -1910,8 +1966,7 @@ void add_sub_counting(betree_sub_t id, struct report_counting* report)
         }
     }
     else {
-        betree_sub_t* subs
-            = brealloc(report->subs, sizeof(*report->subs) * (report->matched + 1));
+        betree_sub_t* subs = brealloc(report->subs, sizeof(*report->subs) * (report->matched + 1));
         if(subs == NULL) {
             fprintf(stderr, "%s brealloc failed", __func__);
             abort();
@@ -1947,26 +2002,28 @@ bool betree_search_with_preds(const struct config* config,
 }
 
 
-static bool is_id_in(uint64_t id, const uint64_t* ids, size_t sz) {
-    if (sz == 0) {
+static bool is_id_in(uint64_t id, const uint64_t* ids, size_t sz)
+{
+    if(sz == 0) {
         return false;
     }
     size_t first = 0;
     size_t last = sz - 1;
-    if (id < ids[first] || id > ids[last]) {
+    if(id < ids[first] || id > ids[last]) {
         return false;
     }
-    size_t middle = (first + last)/2;
-    while (first <= last) {
-        if (id == ids[middle]) {
+    size_t middle = (first + last) / 2;
+    while(first <= last) {
+        if(id == ids[middle]) {
             return true;
         }
-        if (ids[middle] < id) {
+        if(ids[middle] < id) {
             first = middle + 1;
-        } else {
+        }
+        else {
             last = middle - 1;
         }
-        middle = (first + last)/2;
+        middle = (first + last) / 2;
     }
     return false;
 }
@@ -1977,14 +2034,14 @@ bool betree_search_with_preds_ids(const struct config* config,
     const struct cnode* cnode,
     struct report* report,
     const uint64_t* ids,
-    size_t sz
-    )
+    size_t sz)
 {
     uint64_t* undefined = make_undefined(config->attr_domain_count, preds);
     struct memoize memoize = make_memoize(config->pred_map->memoize_count);
     struct subs_to_eval subs;
     init_subs_to_eval(&subs);
-    match_be_tree_ids((const struct attr_domain**)config->attr_domains, preds, cnode, &subs, ids, sz);
+    match_be_tree_ids(
+        (const struct attr_domain**)config->attr_domains, preds, cnode, &subs, ids, sz);
     for(size_t i = 0; i < subs.count; i++) {
         const struct betree_sub* sub = subs.subs[i];
         report->evaluated++;
@@ -1999,7 +2056,8 @@ bool betree_search_with_preds_ids(const struct config* config,
     return true;
 }
 
-bool betree_exists_with_preds(const struct config* config, const struct betree_variable** preds, const struct cnode* cnode)
+bool betree_exists_with_preds(
+    const struct config* config, const struct betree_variable** preds, const struct cnode* cnode)
 {
     uint64_t* undefined = make_undefined(config->attr_domain_count, preds);
     struct memoize memoize = make_memoize(config->pred_map->memoize_count);
@@ -2121,15 +2179,15 @@ void fill_event(const struct config* config, struct betree_event* event)
             case BETREE_SEGMENTS:
                 break;
             case BETREE_INTEGER_ENUM: {
-                betree_ienum_t ienum
-                    = try_get_id_for_ienum(config, pred->attr_var, pred->value.integer_enum_value.integer);
+                betree_ienum_t ienum = try_get_id_for_ienum(
+                    config, pred->attr_var, pred->value.integer_enum_value.integer);
                 pred->value.integer_enum_value.var = pred->attr_var.var;
                 pred->value.integer_enum_value.ienum = ienum;
                 break;
             }
             case BETREE_STRING: {
-                betree_str_t str
-                    = try_get_id_for_string(config, pred->attr_var, pred->value.string_value.string);
+                betree_str_t str = try_get_id_for_string(
+                    config, pred->attr_var, pred->value.string_value.string);
                 pred->value.string_value.var = pred->attr_var.var;
                 pred->value.string_value.str = str;
                 break;
@@ -2148,12 +2206,14 @@ void fill_event(const struct config* config, struct betree_event* event)
                     betree_str_t str = try_get_id_for_string(config,
                         pred->attr_var,
                         pred->value.frequency_caps_value->content[j]->namespace.string);
-                    pred->value.frequency_caps_value->content[j]->namespace.var = pred->attr_var.var;
+                    pred->value.frequency_caps_value->content[j]->namespace.var
+                        = pred->attr_var.var;
                     pred->value.frequency_caps_value->content[j]->namespace.str = str;
                 }
                 break;
             }
-            default: abort();
+            default:
+                abort();
         }
     }
 }
@@ -2169,4 +2229,3 @@ bool validate_variables(const struct config* config, const struct betree_variabl
     }
     return true;
 }
-

@@ -1,14 +1,10 @@
 #pragma once
 
 #include "arraylist.h"
-#include "hashtable.h"
 #include "reasons.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-
-/* if USE_REASONLIST is defined, report uses reasonlist instead of hashtable */
-#define USE_REASONLIST
 
 typedef uint64_t betree_sub_t;
 
@@ -20,7 +16,6 @@ struct betree_err {
     struct arraylist* sub_ids;
 };
 
-#if defined(USE_REASONLIST)
 struct reason_map {
     size_t size;
     char** reason;
@@ -28,7 +23,6 @@ struct reason_map {
 
 struct reason_map* make_reason_map(const struct betree_err* betree);
 void free_reason_map(struct reason_map* map);
-#endif
 
 struct report_err {
     size_t evaluated;
@@ -36,12 +30,8 @@ struct report_err {
     size_t memoized;
     size_t shorted;
     betree_sub_t* subs;
-#if defined(USE_REASONLIST)
     struct reasonlist* reason_sub_id_list;
     struct reason_map* reason_map;
-#else
-    hashtable* reason_sub_id_list;
-#endif
 };
 
 /*

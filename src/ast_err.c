@@ -168,25 +168,14 @@ static bool match_node_inner_err(const struct betree_variable** preds,
     const struct ast_node* node,
     struct memoize* memoize,
     struct report_err* report,
-#if defined(USE_REASONLIST)
     betree_var_t* last_reason,
-    hashtable* memoize_table,
-    size_t attr_domain_count
-#else
-    char* last_reason,
-    hashtable* memoize_table
-#endif
-);
+    betree_var_t* memoize_reason,
+    size_t attr_domain_count);
 
 static bool match_special_expr_err(const struct betree_variable** preds,
     const struct ast_special_expr special_expr,
-#if defined(USE_REASONLIST)
     betree_var_t* last_reason,
-    size_t attr_domain_count
-#else
-    char* last_reason
-#endif
-)
+    size_t attr_domain_count)
 {
     switch(special_expr.type) {
         case AST_SPECIAL_FREQUENCY: {
@@ -195,12 +184,7 @@ static bool match_special_expr_err(const struct betree_variable** preds,
                     const struct ast_special_frequency* f = &special_expr.frequency;
                     struct betree_frequency_caps* caps;
                     bool is_caps_defined = get_frequency_var(f->attr_var.var, preds, &caps);
-#if defined(USE_REASONLIST)
                     *last_reason = special_expr.frequency.attr_var.var;
-#else
-                    char* variable_name = special_expr.frequency.attr_var.attr;
-                    set_reason_sub_id_list(last_reason, variable_name);
-#endif
 
                     if(is_caps_defined == false) {
                         return false;
@@ -222,12 +206,7 @@ static bool match_special_expr_err(const struct betree_variable** preds,
             }
         }
         case AST_SPECIAL_SEGMENT: {
-#if defined(USE_REASONLIST)
             *last_reason = special_expr.segment.attr_var.var;
-#else
-            char* variable_name = special_expr.segment.attr_var.attr;
-            set_reason_sub_id_list(last_reason, variable_name);
-#endif
             const struct ast_special_segment* s = &special_expr.segment;
             struct betree_segments* segments;
             bool is_segment_defined = get_segments_var(s->attr_var.var, preds, &segments);
@@ -251,12 +230,7 @@ static bool match_special_expr_err(const struct betree_variable** preds,
         case AST_SPECIAL_GEO: {
             switch(special_expr.geo.op) {
                 case AST_SPECIAL_GEOWITHINRADIUS: {
-#if defined(USE_REASONLIST)
                     *last_reason = ADDITIONAL_REASON(attr_domain_count, REASON_GEO);
-#else
-                    char* variable_name = "geo";
-                    set_reason_sub_id_list(last_reason, variable_name);
-#endif
                     const struct ast_special_geo* g = &special_expr.geo;
                     double latitude_var, longitude_var;
                     bool is_latitude_defined
@@ -275,12 +249,7 @@ static bool match_special_expr_err(const struct betree_variable** preds,
             return false;
         }
         case AST_SPECIAL_STRING: {
-#if defined(USE_REASONLIST)
             *last_reason = special_expr.string.attr_var.var;
-#else
-            char* variable_name = special_expr.string.attr_var.attr;
-            set_reason_sub_id_list(last_reason, variable_name);
-#endif
             const struct ast_special_string* s = &special_expr.string;
             struct string_value value;
             bool is_string_defined = get_string_var(s->attr_var.var, preds, &value);
@@ -306,21 +275,11 @@ static bool match_special_expr_err(const struct betree_variable** preds,
 
 static bool match_is_null_expr_err(const struct betree_variable** preds,
     const struct ast_is_null_expr is_null_expr,
-#if defined(USE_REASONLIST)
-    betree_var_t* last_reason
-#else
-    char* last_reason
-#endif
-)
+    betree_var_t* last_reason)
 {
     struct value variable;
     bool is_variable_defined = get_variable(is_null_expr.attr_var.var, preds, &variable);
-#if defined(USE_REASONLIST)
     *last_reason = is_null_expr.attr_var.var;
-#else
-    const char* variable_name = is_null_expr.attr_var.attr;
-    set_reason_sub_id_list(last_reason, variable_name);
-#endif
 
     switch(is_null_expr.type) {
         case AST_IS_NULL:
@@ -376,19 +335,9 @@ static void invalid_expr(const char* msg)
 
 static bool match_list_expr_err(const struct betree_variable** preds,
     const struct ast_list_expr list_expr,
-#if defined(USE_REASONLIST)
-    betree_var_t* last_reason
-#else
-    char* last_reason
-#endif
-)
+    betree_var_t* last_reason)
 {
-#if defined(USE_REASONLIST)
     *last_reason = list_expr.attr_var.var;
-#else
-    char* variable_name = list_expr.attr_var.attr;
-    set_reason_sub_id_list(last_reason, variable_name);
-#endif
     struct value variable;
     bool is_variable_defined = get_variable(list_expr.attr_var.var, preds, &variable);
     if(is_variable_defined == false) {
@@ -425,20 +374,12 @@ static bool match_list_expr_err(const struct betree_variable** preds,
             switch(list_expr.value.value_type) {
                 case AST_LIST_VALUE_INTEGER_LIST:
                     if(match_all_of_int(variable, list_expr) == false) {
-#if defined(USE_REASONLIST)
                         *last_reason = list_expr.attr_var.var;
-#else
-                        set_reason_sub_id_list(last_reason, variable_name);
-#endif
                     }
                     return match_all_of_int(variable, list_expr);
                 case AST_LIST_VALUE_STRING_LIST:
                     if(match_all_of_string(variable, list_expr) == false) {
-#if defined(USE_REASONLIST)
                         *last_reason = list_expr.attr_var.var;
-#else
-                        set_reason_sub_id_list(last_reason, variable_name);
-#endif
                     }
                     return match_all_of_string(variable, list_expr);
                 default:
@@ -452,12 +393,7 @@ static bool match_list_expr_err(const struct betree_variable** preds,
 
 static bool match_set_expr_err(const struct betree_variable** preds,
     const struct ast_set_expr set_expr,
-#if defined(USE_REASONLIST)
-    betree_var_t* last_reason
-#else
-    char* last_reason
-#endif
-)
+    betree_var_t* last_reason)
 {
     struct set_left_value left = set_expr.left_value;
     struct set_right_value right = set_expr.right_value;
@@ -465,12 +401,7 @@ static bool match_set_expr_err(const struct betree_variable** preds,
 
     if(left.value_type == AST_SET_LEFT_VALUE_INTEGER
         && right.value_type == AST_SET_RIGHT_VALUE_VARIABLE) {
-#if defined(USE_REASONLIST)
         *last_reason = set_expr.right_value.variable_value.var;
-#else
-        char* variable_name = set_expr.right_value.variable_value.attr;
-        set_reason_sub_id_list(last_reason, variable_name);
-#endif
         struct betree_integer_list* variable;
         bool is_variable_defined = get_integer_list_var(right.variable_value.var, preds, &variable);
         if(is_variable_defined == false) {
@@ -480,12 +411,7 @@ static bool match_set_expr_err(const struct betree_variable** preds,
     }
     else if(left.value_type == AST_SET_LEFT_VALUE_STRING
         && right.value_type == AST_SET_RIGHT_VALUE_VARIABLE) {
-#if defined(USE_REASONLIST)
         *last_reason = set_expr.right_value.variable_value.var;
-#else
-        char* variable_name = set_expr.right_value.variable_value.attr;
-        set_reason_sub_id_list(last_reason, variable_name);
-#endif
         struct betree_string_list* variable;
         bool is_variable_defined = get_string_list_var(right.variable_value.var, preds, &variable);
         if(is_variable_defined == false) {
@@ -495,12 +421,7 @@ static bool match_set_expr_err(const struct betree_variable** preds,
     }
     else if(left.value_type == AST_SET_LEFT_VALUE_VARIABLE
         && right.value_type == AST_SET_RIGHT_VALUE_INTEGER_LIST) {
-#if defined(USE_REASONLIST)
         *last_reason = set_expr.left_value.variable_value.var;
-#else
-        char* variable_name = set_expr.left_value.variable_value.attr;
-        set_reason_sub_id_list(last_reason, variable_name);
-#endif
         int64_t variable;
         bool is_variable_defined = get_integer_var(left.variable_value.var, preds, &variable);
         if(is_variable_defined == false) {
@@ -510,12 +431,7 @@ static bool match_set_expr_err(const struct betree_variable** preds,
     }
     else if(left.value_type == AST_SET_LEFT_VALUE_VARIABLE
         && right.value_type == AST_SET_RIGHT_VALUE_STRING_LIST) {
-#if defined(USE_REASONLIST)
         *last_reason = set_expr.left_value.variable_value.var;
-#else
-        char* variable_name = set_expr.left_value.variable_value.attr;
-        set_reason_sub_id_list(last_reason, variable_name);
-#endif
         struct string_value variable;
         bool is_variable_defined = get_string_var(left.variable_value.var, preds, &variable);
         if(is_variable_defined == false) {
@@ -541,19 +457,9 @@ static bool match_set_expr_err(const struct betree_variable** preds,
 
 static bool match_compare_expr_err(const struct betree_variable** preds,
     const struct ast_compare_expr compare_expr,
-#if defined(USE_REASONLIST)
-    betree_var_t* last_reason
-#else
-    char* last_reason
-#endif
-)
+    betree_var_t* last_reason)
 {
-#if defined(USE_REASONLIST)
     *last_reason = compare_expr.attr_var.var;
-#else
-    char* variable_name = compare_expr.attr_var.attr;
-    set_reason_sub_id_list(last_reason, variable_name);
-#endif
     struct value variable;
     bool is_variable_defined = get_variable(compare_expr.attr_var.var, preds, &variable);
     if(is_variable_defined == false) {
@@ -623,20 +529,10 @@ static bool match_compare_expr_err(const struct betree_variable** preds,
 
 static bool match_equality_expr_err(const struct betree_variable** preds,
     const struct ast_equality_expr equality_expr,
-#if defined(USE_REASONLIST)
-    betree_var_t* last_reason
-#else
-    char* last_reason
-#endif
-)
+    betree_var_t* last_reason)
 {
     struct value variable;
-#if defined(USE_REASONLIST)
     *last_reason = equality_expr.attr_var.var;
-#else
-    char* variable_name = equality_expr.attr_var.attr;
-    set_reason_sub_id_list(last_reason, variable_name);
-#endif
     bool is_variable_defined = get_variable(equality_expr.attr_var.var, preds, &variable);
     if(is_variable_defined == false) {
         return false;
@@ -697,106 +593,67 @@ static bool match_bool_expr_err(const struct betree_variable** preds,
     const struct ast_bool_expr bool_expr,
     struct memoize* memoize,
     struct report_err* report,
-#if defined(USE_REASONLIST)
     betree_var_t* last_reason,
-    hashtable* memoize_table,
-    size_t attr_domain_count
-#else
-    char* last_reason,
-    hashtable* memoize_table
-#endif
-)
+    betree_var_t* memoize_reason,
+    size_t attr_domain_count)
 {
-#if !defined(USE_REASONLIST)
-    char* variable_name = bool_expr.variable.attr;
-#endif
-
     switch(bool_expr.op) {
         case AST_BOOL_LITERAL:
             return bool_expr.literal;
         case AST_BOOL_AND: {
-#if defined(USE_REASONLIST)
             bool lhs = match_node_inner_err(preds,
                 bool_expr.binary.lhs,
                 memoize,
                 report,
                 last_reason,
-                memoize_table,
+                memoize_reason,
                 attr_domain_count);
-#else
-            bool lhs = match_node_inner_err(
-                preds, bool_expr.binary.lhs, memoize, report, last_reason, memoize_table);
-#endif
             if(lhs == false) {
                 return false;
             }
-#if defined(USE_REASONLIST)
             bool rhs = match_node_inner_err(preds,
                 bool_expr.binary.rhs,
                 memoize,
                 report,
                 last_reason,
-                memoize_table,
+                memoize_reason,
                 attr_domain_count);
-#else
-            bool rhs = match_node_inner_err(
-                preds, bool_expr.binary.rhs, memoize, report, last_reason, memoize_table);
-#endif
             return rhs;
         }
         case AST_BOOL_OR: {
-#if defined(USE_REASONLIST)
             bool lhs = match_node_inner_err(preds,
                 bool_expr.binary.lhs,
                 memoize,
                 report,
                 last_reason,
-                memoize_table,
+                memoize_reason,
                 attr_domain_count);
-#else
-            bool lhs = match_node_inner_err(
-                preds, bool_expr.binary.lhs, memoize, report, last_reason, memoize_table);
-#endif
             if(lhs == true) {
                 return true;
             }
-#if defined(USE_REASONLIST)
             bool rhs = match_node_inner_err(preds,
                 bool_expr.binary.rhs,
                 memoize,
                 report,
                 last_reason,
-                memoize_table,
+                memoize_reason,
                 attr_domain_count);
-#else
-            bool rhs = match_node_inner_err(
-                preds, bool_expr.binary.rhs, memoize, report, last_reason, memoize_table);
-#endif
             return rhs;
         }
         case AST_BOOL_NOT: {
-#if defined(USE_REASONLIST)
             bool result = match_node_inner_err(preds,
                 bool_expr.unary.expr,
                 memoize,
                 report,
                 last_reason,
-                memoize_table,
+                memoize_reason,
                 attr_domain_count);
-#else
-            bool result = match_node_inner_err(
-                preds, bool_expr.unary.expr, memoize, report, last_reason, memoize_table);
-#endif
             return !result;
         }
         case AST_BOOL_VARIABLE: {
             bool value;
             bool is_variable_defined = get_bool_var(bool_expr.variable.var, preds, &value);
-#if defined(USE_REASONLIST)
             *last_reason = bool_expr.variable.var;
-#else
-            set_reason_sub_id_list(last_reason, variable_name);
-#endif
 
             if(is_variable_defined == false) {
                 return false;
@@ -812,49 +669,23 @@ static bool match_node_inner_err(const struct betree_variable** preds,
     const struct ast_node* node,
     struct memoize* memoize,
     struct report_err* report,
-#if defined(USE_REASONLIST)
     betree_var_t* last_reason,
-    hashtable* memoize_table,
-    size_t attr_domain_count
-#else
-    char* last_reason,
-    hashtable* memoize_table
-#endif
-)
+    betree_var_t* memoize_reason,
+    size_t attr_domain_count)
 {
     if(node->memoize_id != INVALID_PRED) {
-#if !defined(USE_UINT64_KEY)
-        char memoize_id_c[22];
-        sprintf(memoize_id_c, "%ld", node->memoize_id);
-#endif
         if(test_bit(memoize->pass, node->memoize_id)) {
             if(report != NULL) {
                 report->memoized++;
             }
-#if defined(USE_REASONLIST)
-#if defined(USE_UINT64_KEY)
-            *last_reason = hashtable_get(memoize_table, node->memoize_id);
-#else
-            *last_reason = hashtable_get(memoize_table, memoize_id_c);
-#endif
-#else
-            set_reason_sub_id_list(last_reason, hashtable_get(memoize_table, memoize_id_c));
-#endif
+            *last_reason = memoize_reason[node->memoize_id];
             return true;
         }
         if(test_bit(memoize->fail, node->memoize_id)) {
             if(report != NULL) {
                 report->memoized++;
             }
-#if defined(USE_REASONLIST)
-#if defined(USE_UINT64_KEY)
-            *last_reason = hashtable_get(memoize_table, node->memoize_id);
-#else
-            *last_reason = hashtable_get(memoize_table, memoize_id_c);
-#endif
-#else
-            set_reason_sub_id_list(last_reason, hashtable_get(memoize_table, memoize_id_c));
-#endif
+            *last_reason = memoize_reason[node->memoize_id];
             return false;
         }
     }
@@ -864,27 +695,18 @@ static bool match_node_inner_err(const struct betree_variable** preds,
             result = match_is_null_expr_err(preds, node->is_null_expr, last_reason);
             break;
         case AST_TYPE_SPECIAL_EXPR: {
-#if defined(USE_REASONLIST)
             result
                 = match_special_expr_err(preds, node->special_expr, last_reason, attr_domain_count);
-#else
-            result = match_special_expr_err(preds, node->special_expr, last_reason);
-#endif
             break;
         }
         case AST_TYPE_BOOL_EXPR: {
-#if defined(USE_REASONLIST)
             result = match_bool_expr_err(preds,
                 node->bool_expr,
                 memoize,
                 report,
                 last_reason,
-                memoize_table,
+                memoize_reason,
                 attr_domain_count);
-#else
-            result = match_bool_expr_err(
-                preds, node->bool_expr, memoize, report, last_reason, memoize_table);
-#endif
             break;
         }
         case AST_TYPE_LIST_EXPR: {
@@ -907,33 +729,13 @@ static bool match_node_inner_err(const struct betree_variable** preds,
             abort();
     }
     if(node->memoize_id != INVALID_PRED) {
-#if !defined(USE_UINT64_KEY)
-        char memoize_id_c[23];
-        sprintf(memoize_id_c, "%ld", node->memoize_id);
-#endif
         if(result) {
             set_bit(memoize->pass, node->memoize_id);
-#if defined(USE_REASONLIST)
-#if defined(USE_UINT64_KEY)
-            hashtable_set(memoize_table, node->memoize_id, *last_reason);
-#else
-            hashtable_set(memoize_table, bstrdup(memoize_id_c), *last_reason);
-#endif
-#else
-            hashtable_set(memoize_table, bstrdup(memoize_id_c), bstrdup(last_reason));
-#endif
+            memoize_reason[node->memoize_id] = *last_reason;
         }
         else {
             set_bit(memoize->fail, node->memoize_id);
-#if defined(USE_REASONLIST)
-#if defined(USE_UINT64_KEY)
-            hashtable_set(memoize_table, node->memoize_id, *last_reason);
-#else
-            hashtable_set(memoize_table, bstrdup(memoize_id_c), *last_reason);
-#endif
-#else
-            hashtable_set(memoize_table, bstrdup(memoize_id_c), bstrdup(last_reason));
-#endif
+            memoize_reason[node->memoize_id] = *last_reason;
         }
     }
     return result;
@@ -943,20 +745,10 @@ bool match_node_err(const struct betree_variable** preds,
     const struct ast_node* node,
     struct memoize* memoize,
     struct report_err* report,
-#if defined(USE_REASONLIST)
     betree_var_t* last_reason,
-    hashtable* memoize_table,
-    size_t attr_domain_count
-#else
-    char* last_reason,
-    hashtable* memoize_table
-#endif
-)
+    betree_var_t* memoize_reason,
+    size_t attr_domain_count)
 {
-#if defined(USE_REASONLIST)
     return match_node_inner_err(
-        preds, node, memoize, report, last_reason, memoize_table, attr_domain_count);
-#else
-    return match_node_inner_err(preds, node, memoize, report, last_reason, memoize_table);
-#endif
+        preds, node, memoize, report, last_reason, memoize_reason, attr_domain_count);
 }
