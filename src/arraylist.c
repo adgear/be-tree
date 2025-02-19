@@ -62,7 +62,7 @@ void arraylist_allocate(arraylist* l, unsigned int size)
     if(size > l->capacity) {
         unsigned int new_capacity = l->capacity;
         while(new_capacity < size) {
-            new_capacity *= 2;
+            new_capacity <<= 1;
         }
         l->body = brealloc(l->body, sizeof(void*) * new_capacity);
         assert(l->body);

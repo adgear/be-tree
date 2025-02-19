@@ -1,7 +1,7 @@
 #pragma once
 
 #include "arraylist.h"
-#include "reasons.h"
+#include "value.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -16,13 +16,24 @@ struct betree_err {
     struct arraylist* sub_ids;
 };
 
-struct reason_map {
-    size_t size;
-    char** reason;
+struct betree_reason_t {
+    char* name;
+    struct arraylist* list;
 };
 
-struct reason_map* make_reason_map(const struct betree_err* betree);
-void free_reason_map(struct reason_map* map);
+enum addtional_reason_t {
+    REASON_GEO = 1,
+    REASON_INVALID_EVENT = 2,
+    REASON_UNKNOWN = 3,
+    REASON_ADDITIONAL_MAX = REASON_UNKNOWN
+};
+
+struct betree_reason_map_t {
+    size_t size;
+    struct betree_reason_t** reasons;
+};
+
+#define ADDITIONAL_REASON(domain_count, reason) ((domain_count - 1) + reason)
 
 struct report_err {
     size_t evaluated;
@@ -30,8 +41,7 @@ struct report_err {
     size_t memoized;
     size_t shorted;
     betree_sub_t* subs;
-    struct reasonlist* reason_sub_id_list;
-    struct reason_map* reason_map;
+    struct betree_reason_map_t* reason_sub_id_list;
 };
 
 /*
@@ -116,3 +126,15 @@ void free_report_err(struct report_err* report);
  */
 void betree_deinit_err(struct betree_err* betree);
 void betree_free_err(struct betree_err* betree);
+
+struct betree_reason_t* betree_reason_create(const char* reason_name);
+void betree_reason_destroy(struct betree_reason_t* reason);
+
+struct betree_reason_map_t* betree_reason_map_create(const struct betree_err* betree);
+unsigned int betree_reason_map_size(struct betree_reason_map_t* m);
+struct arraylist* betree_reason_map_get(struct betree_reason_map_t* l, betree_var_t reason);
+void betree_reason_map_additem(
+    struct betree_reason_map_t* l, betree_var_t reason, betree_sub_t value);
+void betree_reason_map_join(
+    struct betree_reason_map_t* l, betree_var_t reason, struct arraylist* sub_ids);
+void betree_reason_map_destroy(struct betree_reason_map_t* reason);

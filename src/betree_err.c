@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <ctype.h>
 #include <float.h>
 #include <inttypes.h>
@@ -14,7 +15,6 @@
 #include "betree_err.h"
 #include "error.h"
 #include "hashmap.h"
-#include "reasons.h"
 #include "tree.h"
 #include "tree_err.h"
 #include "utils.h"
@@ -661,37 +661,6 @@ bool betree_search_with_event_ids_err(const struct betree_err* betree,
     return betree_search_with_event_filled_ids_err(betree, event, report, ids, sz);
 }
 
-struct reason_map* make_reason_map(const struct betree_err* betree)
-{
-    struct reason_map* map = bmalloc(sizeof(struct reason_map));
-
-    map->size = betree->config->attr_domain_count + REASON_ADDITIONAL_MAX;
-    map->reason = bmalloc(sizeof(char*) * (map->size));
-    for(betree_var_t i = 0; i < betree->config->attr_domain_count; i++) {
-        map->reason[i] = bstrdup(betree->config->attr_domains[i]->attr_var.attr);
-    }
-
-    betree_var_t idx_geo = ADDITIONAL_REASON(betree->config->attr_domain_count, REASON_GEO);
-    map->reason[idx_geo] = bstrdup("geo");
-    /* no_reason is not in use for the time being */
-    betree_var_t idx_unknown = ADDITIONAL_REASON(betree->config->attr_domain_count, REASON_UNKNOWN);
-    map->reason[idx_unknown] = bstrdup("no_reason");
-    betree_var_t idx_invalid_event
-        = ADDITIONAL_REASON(betree->config->attr_domain_count, REASON_INVALID_EVENT);
-    map->reason[idx_invalid_event] = bstrdup("invalid_event");
-
-    return map;
-}
-
-void free_reason_map(struct reason_map* map)
-{
-    for(betree_var_t i = 0; i < map->size; i++) {
-        bfree(map->reason[i]);
-    }
-    bfree(map->reason);
-    bfree(map);
-}
-
 struct report_err* make_report_err(const struct betree_err* betree)
 {
     struct report_err* report = bcalloc(sizeof(*report));
@@ -704,17 +673,14 @@ struct report_err* make_report_err(const struct betree_err* betree)
     report->memoized = 0;
     report->shorted = 0;
     report->subs = NULL;
-    report->reason_sub_id_list
-        = reasonlist_create(betree->config->attr_domain_count + REASON_ADDITIONAL_MAX);
-    report->reason_map = make_reason_map(betree);
+    report->reason_sub_id_list = betree_reason_map_create(betree);
 
     return report;
 }
 
 void free_report_err(struct report_err* report)
 {
-    reasonlist_destroy(report->reason_sub_id_list);
-    free_reason_map(report->reason_map);
+    betree_reason_map_destroy(report->reason_sub_id_list);
     bfree(report->subs);
     bfree(report);
 }
@@ -838,4 +804,89 @@ struct betree_event* betree_make_event_err(const struct betree_err* betree)
     event->variable_count = betree->config->attr_domain_count;
     event->variables = bcalloc(event->variable_count * sizeof(*event->variables));
     return event;
+}
+
+struct betree_reason_t* betree_reason_create(const char* reason_name)
+{
+    struct betree_reason_t* res = (struct betree_reason_t*)bmalloc(sizeof(struct betree_reason_t));
+    res->name = bstrdup(reason_name);
+    res->list = arraylist_create();
+    return res;
+}
+
+void betree_reason_destroy(struct betree_reason_t* reason)
+{
+    if(reason) {
+        if(reason->name) bfree(reason->name);
+        if(reason->list) arraylist_destroy(reason->list);
+        bfree(reason);
+    }
+}
+
+struct betree_reason_map_t* betree_reason_map_create(const struct betree_err* betree)
+{
+    struct betree_reason_map_t* res
+        = (struct betree_reason_map_t*)bmalloc(sizeof(struct betree_reason_map_t));
+    res->size = betree->config->attr_domain_count + REASON_ADDITIONAL_MAX;
+    res->reasons = (struct betree_reason_t**)bcalloc(sizeof(struct betree_reason_t*) * res->size);
+    for(betree_var_t i = 0; i < betree->config->attr_domain_count; i++) {
+        res->reasons[i] = betree_reason_create(betree->config->attr_domains[i]->attr_var.attr);
+    }
+
+    betree_var_t idx_geo = ADDITIONAL_REASON(betree->config->attr_domain_count, REASON_GEO);
+    res->reasons[idx_geo] = betree_reason_create("geo");
+    /* no_reason is not in use for the time being */
+    betree_var_t idx_unknown = ADDITIONAL_REASON(betree->config->attr_domain_count, REASON_UNKNOWN);
+    res->reasons[idx_unknown] = betree_reason_create("no_reason");
+    betree_var_t idx_invalid_event
+        = ADDITIONAL_REASON(betree->config->attr_domain_count, REASON_INVALID_EVENT);
+    res->reasons[idx_invalid_event] = betree_reason_create("invalid_event");
+
+    return res;
+}
+
+unsigned int betree_reason_map_size(struct betree_reason_map_t* m)
+{
+    return m->size;
+}
+
+struct arraylist* betree_reason_map_get(struct betree_reason_map_t* m, betree_var_t reason)
+{
+    assert(reason < m->size);
+    assert(m->reasons);
+    assert(m->reasons[reason]);
+    return m->reasons[reason]->list;
+}
+
+void betree_reason_map_additem(
+    struct betree_reason_map_t* m, betree_var_t reason, betree_sub_t value)
+{
+    assert(reason < m->size);
+    assert(m->reasons);
+    assert(m->reasons[reason]);
+    assert(m->reasons[reason]->list);
+    arraylist_add(m->reasons[reason]->list, (void*)value);
+}
+
+void betree_reason_map_join(
+    struct betree_reason_map_t* m, betree_var_t reason, struct arraylist* sub_ids)
+{
+    assert(reason < m->size);
+    assert(m->reasons);
+    assert(m->reasons[reason]);
+    assert(m->reasons[reason]->list);
+    if(sub_ids->size > 0) arraylist_join(m->reasons[reason]->list, sub_ids);
+}
+
+void betree_reason_map_destroy(struct betree_reason_map_t* reason)
+{
+    if(reason) {
+        if(reason->reasons) {
+            for(size_t i = 0; i < reason->size; i++) {
+                if(reason->reasons[i]) betree_reason_destroy(reason->reasons[i]);
+            }
+            bfree(reason->reasons);
+        }
+        bfree(reason);
+    }
 }
