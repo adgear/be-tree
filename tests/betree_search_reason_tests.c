@@ -8,6 +8,7 @@
 #include "arraylist.h"
 #include "betree_err.h"
 #include "debug.h"
+#include "debug_err.h"
 #include "helper.h"
 #include "minunit.h"
 #include "printer.h"
@@ -47,14 +48,15 @@ enum ATTR_DOMAIN_POSITION {
         | (1 << z) | (1 << q))
 
 
-void make_attr_domains(struct betree_err* tree, size_t config);
-void make_attr_domains_undefined(struct betree_err* tree, size_t config, size_t config_undefined);
-void betree_bulk_insert(struct betree_err* tree, const char** exprs, int count);
+void betree_bulk_insert(struct betree_err* tree, const char** exprs, const size_t count);
 void betree_bulk_insert_with_constants(struct betree_err* tree,
     const char** exprs,
-    int exprs_count,
-    struct betree_constant** constants,
-    int constants_count);
+    size_t exprs_count,
+    const struct betree_constant** constants,
+    size_t constants_count);
+
+void make_attr_domains(struct betree_err* tree, size_t config);
+void make_attr_domains_undefined(struct betree_err* tree, size_t config, size_t config_undefined);
 
 int test_bool_fail()
 {
@@ -75,10 +77,10 @@ int test_bool_fail()
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
-    mu_assert((betree_reason_map_get(report->reason_sub_id_list, 0))->body[0] == 1, "goodReason");
+    mu_assert((betree_var_t)(betree_reason_map_get(report->reason_sub_id_list, 0))->body[0]
+            == (betree_var_t)1,
+        "goodReason");
     mu_assert(strcmp(report->reason_sub_id_list->reasons[0]->name, "b") == 0, "goodReason");
-
-    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
     free_report_err(report);
     betree_free_err(tree);
@@ -108,10 +110,10 @@ int test_int_fail()
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
-    mu_assert((betree_reason_map_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
+    mu_assert((betree_var_t)(betree_reason_map_get(report->reason_sub_id_list, 1))->body[0]
+            == (betree_var_t)1,
+        "goodReason");
     mu_assert(strcmp(report->reason_sub_id_list->reasons[1]->name, "i") == 0, "goodReason");
-
-    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
     free_report_err(report);
     betree_free_err(tree);
@@ -141,10 +143,10 @@ int test_float_fail()
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
-    mu_assert((betree_reason_map_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
+    mu_assert((betree_var_t)(betree_reason_map_get(report->reason_sub_id_list, 1))->body[0]
+            == (betree_var_t)1,
+        "goodReason");
     mu_assert(strcmp(report->reason_sub_id_list->reasons[1]->name, "f") == 0, "goodReason");
-
-    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
     free_report_err(report);
     betree_free_err(tree);
@@ -173,10 +175,10 @@ int test_bin_fail()
 
     betree_search_err(tree, event, report);
     mu_assert(report->matched == 0, "goodEvent");
-    mu_assert((betree_reason_map_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
+    mu_assert((betree_var_t)(betree_reason_map_get(report->reason_sub_id_list, 1))->body[0]
+            == (betree_var_t)1,
+        "goodReason");
     mu_assert(strcmp(report->reason_sub_id_list->reasons[1]->name, "s") == 0, "goodReason");
-
-    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
     free_report_err(report);
     betree_free_err(tree);
@@ -206,10 +208,10 @@ int test_int_list_fail()
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
-    mu_assert((betree_reason_map_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
+    mu_assert((betree_var_t)(betree_reason_map_get(report->reason_sub_id_list, 1))->body[0]
+            == (betree_var_t)1,
+        "goodReason");
     mu_assert(strcmp(report->reason_sub_id_list->reasons[1]->name, "il") == 0, "goodReason");
-
-    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
     free_report_err(report);
     betree_free_err(tree);
@@ -239,10 +241,10 @@ int test_bin_list_fail()
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
-    mu_assert((betree_reason_map_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
+    mu_assert((betree_var_t)(betree_reason_map_get(report->reason_sub_id_list, 1))->body[0]
+            == (betree_var_t)1,
+        "goodReason");
     mu_assert(strcmp(report->reason_sub_id_list->reasons[1]->name, "sl") == 0, "goodReason");
-
-    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
     free_report_err(report);
     betree_free_err(tree);
@@ -272,10 +274,10 @@ int test_segments_fail()
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
-    mu_assert((betree_reason_map_get(report->reason_sub_id_list, 0))->body[0] == 1, "goodReason");
+    mu_assert((betree_var_t)(betree_reason_map_get(report->reason_sub_id_list, 0))->body[0]
+            == (betree_var_t)1,
+        "goodReason");
     mu_assert(strcmp(report->reason_sub_id_list->reasons[0]->name, "seg") == 0, "goodReason");
-
-    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
 
     free_report_err(report);
     betree_free_err(tree);
@@ -290,7 +292,7 @@ int test_frequency_cap_fail()
 {
     struct betree_err* tree = betree_make_err();
 
-    const int constant_count = 1;
+    const size_t constant_count = 1;
     const struct betree_constant* constants[]
         = { betree_make_integer_constant("advertiser_id", 20) };
 
@@ -310,10 +312,11 @@ int test_frequency_cap_fail()
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
-    mu_assert((betree_reason_map_get(report->reason_sub_id_list, 0))->body[0] == 1, "goodReason");
-    mu_assert(strcmp(report->reason_sub_id_list->reasons[0]->name, "frequency_caps") == 0, "goodReason");
-
-    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
+    mu_assert((betree_var_t)(betree_reason_map_get(report->reason_sub_id_list, 0))->body[0]
+            == (betree_var_t)1,
+        "goodReason");
+    mu_assert(
+        strcmp(report->reason_sub_id_list->reasons[0]->name, "frequency_caps") == 0, "goodReason");
 
     free_report_err(report);
     betree_free_err(tree);
@@ -343,9 +346,9 @@ int test_geo_fail()
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
-    mu_assert((betree_reason_map_get(report->reason_sub_id_list, 3))->body[0] == 1, "goodReason");
-
-    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
+    mu_assert((betree_var_t)(betree_reason_map_get(report->reason_sub_id_list, 3))->body[0]
+            == (betree_var_t)1,
+        "goodReason");
 
     free_report_err(report);
     betree_free_err(tree);
@@ -375,9 +378,9 @@ int test_int64_fail()
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
-    mu_assert((betree_reason_map_get(report->reason_sub_id_list, 1))->body[0] == 1, "goodReason");
-
-    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests.dot");
+    mu_assert((betree_var_t)(betree_reason_map_get(report->reason_sub_id_list, 1))->body[0]
+            == (betree_var_t)1,
+        "goodReason");
 
     free_report_err(report);
     betree_free_err(tree);
@@ -411,11 +414,15 @@ int test_short_circuit_fail()
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
-    mu_assert((betree_reason_map_get(report->reason_sub_id_list, 2))->body[0] == 1, "goodReason");
-    mu_assert((betree_reason_map_get(report->reason_sub_id_list, 3))->body[0] == 2, "goodReason");
-    mu_assert((betree_reason_map_get(report->reason_sub_id_list, 4))->body[0] == 3, "goodReason");
-
-    // write_dot_to_file_err(tree, "tests/beetree_search_reason_tests_short_circuit.dot");
+    mu_assert((betree_var_t)(betree_reason_map_get(report->reason_sub_id_list, 2))->body[0]
+            == (betree_var_t)1,
+        "goodReason");
+    mu_assert((betree_var_t)(betree_reason_map_get(report->reason_sub_id_list, 3))->body[0]
+            == (betree_var_t)2,
+        "goodReason");
+    mu_assert((betree_var_t)(betree_reason_map_get(report->reason_sub_id_list, 4))->body[0]
+            == (betree_var_t)3,
+        "goodReason");
 
     free_report_err(report);
     betree_free_err(tree);
@@ -451,15 +458,20 @@ int test_multiple_bool_exprs_fail()
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
-    mu_assert((betree_reason_map_get(report->reason_sub_id_list, 1))->body[0] == 3, "goodReason");
-    mu_assert((betree_reason_map_get(report->reason_sub_id_list, 2))->body[0] == 4, "goodReason");
+    mu_assert((betree_var_t)(betree_reason_map_get(report->reason_sub_id_list, 1))->body[0]
+            == (betree_var_t)3,
+        "goodReason");
+    mu_assert((betree_var_t)(betree_reason_map_get(report->reason_sub_id_list, 2))->body[0]
+            == (betree_var_t)4,
+        "goodReason");
 
-    const int expected_set[] = { 1, 2, 5 };
-    int found_total = 0;
+    const betree_var_t expected_set[] = { 1, 2, 5 };
+    size_t found_total = 0;
     for(size_t j = 0; j < 3; j++) {
         for(size_t k = 0; k < 3; k++) {
-            found_total += ((betree_reason_map_get(report->reason_sub_id_list, 3))->body[k]
-                               == expected_set[j])
+            found_total
+                += ((betree_var_t)(betree_reason_map_get(report->reason_sub_id_list, 3))->body[k]
+                       == (betree_var_t)expected_set[j])
                 ? 1
                 : 0;
         }
@@ -503,12 +515,13 @@ int test_memoize_fail()
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
-    const int expected_set[] = { 1, 2, 3, 4, 5 };
-    int found_total = 0;
+    const betree_var_t expected_set[] = { 1, 2, 3, 4, 5 };
+    size_t found_total = 0;
     for(size_t j = 0; j < 5; j++) {
         for(size_t k = 0; k < 5; k++) {
-            found_total += (((betree_reason_map_get(report->reason_sub_id_list, 3))->body[k])
-                               == expected_set[j])
+            found_total
+                += ((betree_var_t)((betree_reason_map_get(report->reason_sub_id_list, 3))->body[k])
+                       == (betree_var_t)expected_set[j])
                 ? 1
                 : 0;
         }
@@ -529,7 +542,7 @@ int test_all_search_term()
 {
     struct betree_err* tree = betree_make_err();
 
-    const int constant_count = 4;
+    const size_t constant_count = 4;
     const struct betree_constant* constants[] = { betree_make_integer_constant("campaign_id", 10),
         betree_make_integer_constant("advertiser_id", 20),
         betree_make_integer_constant("flight_id", 30),
@@ -567,12 +580,13 @@ int test_all_search_term()
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
-    const int expected_set[] = { 1, 2 };
-    int found_total = 0;
+    const betree_var_t expected_set[] = { 1, 2 };
+    size_t found_total = 0;
     for(size_t j = 0; j < 2; j++) {
         for(size_t k = 0; k < 2; k++) {
-            found_total += (((betree_reason_map_get(report->reason_sub_id_list, 6))->body[k])
-                               == expected_set[j])
+            found_total
+                += ((betree_var_t)((betree_reason_map_get(report->reason_sub_id_list, 6))->body[k])
+                       == (betree_var_t)expected_set[j])
                 ? 1
                 : 0;
         }
@@ -591,12 +605,6 @@ int test_all_search_term()
 int test_event_search_reason()
 {
     struct betree_err* tree = betree_make_err();
-    struct betree* tree2 = betree_make_err();
-
-    fprintf(stderr, "betree_err: %d\n", sizeof(*tree));
-    fprintf(stderr, "betree: %d\n", sizeof(*tree2));
-    fprintf(stderr, "struct betree_err: %d\n", sizeof(struct betree_err));
-    fprintf(stderr, "struct betree: %d\n", sizeof(struct betree));
 
     make_attr_domains(tree, ATTR_CONFIG_4(ATTR_BOOL, ATTR_INT, ATTR_FLOAT, ATTR_STR));
 
@@ -624,24 +632,26 @@ int test_event_search_reason()
     betree_search_err(tree, event, report);
 
     mu_assert(report->matched == 0, "goodEvent");
-    const int expected_set1[] = { 1, 2, 3 };
-    int found_total1 = 0;
+    const betree_var_t expected_set1[] = { 1, 2, 3 };
+    size_t found_total1 = 0;
     for(size_t j = 0; j < 3; j++) {
         for(size_t k = 0; k < 3; k++) {
-            found_total1 += (((betree_reason_map_get(report->reason_sub_id_list, 3))->body[k])
-                                == expected_set1[j])
+            found_total1
+                += ((betree_var_t)((betree_reason_map_get(report->reason_sub_id_list, 3))->body[k])
+                       == (betree_var_t)expected_set1[j])
                 ? 1
                 : 0;
         }
     }
     mu_assert(found_total1 == 3, "goodReason");
 
-    const int expected_set2[] = { 4, 5, 6, 7 };
-    int found_total2 = 0;
+    const betree_var_t expected_set2[] = { 4, 5, 6, 7 };
+    size_t found_total2 = 0;
     for(size_t j = 0; j < 4; j++) {
         for(size_t k = 0; k < 4; k++) {
-            found_total2 += (((betree_reason_map_get(report->reason_sub_id_list, 0))->body[k])
-                                == expected_set2[j])
+            found_total2
+                += ((betree_var_t)((betree_reason_map_get(report->reason_sub_id_list, 0))->body[k])
+                       == (betree_var_t)expected_set2[j])
                 ? 1
                 : 0;
         }
@@ -692,26 +702,25 @@ void make_attr_domains_undefined(struct betree_err* tree, size_t config, size_t 
 }
 
 
-void betree_bulk_insert(struct betree_err* tree, const char** exprs, int count)
+void betree_bulk_insert(struct betree_err* tree, const char** exprs, const size_t count)
 {
     for(size_t i = 0; i < count; i++) {
-        int idx = i + 1;
+        size_t idx = i + 1;
 #if defined(DEBUG)
         fprintf(stderr, "betree_insert exprs[%d] ... %s\n", idx, exprs[i]);
 #endif
-        mu_assert(betree_insert_err(tree, idx, exprs[i]), "");
+        betree_insert_err(tree, idx, exprs[i]);
     }
 }
 
-
 void betree_bulk_insert_with_constants(struct betree_err* tree,
     const char** exprs,
-    int exprs_count,
-    struct betree_constant** constants,
-    int constants_count)
+    size_t exprs_count,
+    const struct betree_constant** constants,
+    size_t constants_count)
 {
     for(size_t i = 0; i < exprs_count; i++) {
-        int idx = i + 1;
+        size_t idx = i + 1;
 #if defined(DEBUG)
         fprintf(stderr, "betree_insert exprs[%d] ... %s\n", idx, exprs[i]);
 #endif

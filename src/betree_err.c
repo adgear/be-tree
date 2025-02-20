@@ -680,6 +680,7 @@ struct report_err* make_report_err(const struct betree_err* betree)
 
 void free_report_err(struct report_err* report)
 {
+    betree_reason_map_destroy(report->reason_sub_id_list);
     bfree(report->subs);
     bfree(report);
 }

@@ -1,6 +1,5 @@
 #pragma once
 
-struct config;
 struct cnode_err;
 struct betree_err;
 
