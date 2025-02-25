@@ -724,7 +724,7 @@ void betree_bulk_insert_with_constants(struct betree_err* tree,
 #if defined(DEBUG)
         fprintf(stderr, "betree_insert exprs[%d] ... %s\n", idx, exprs[i]);
 #endif
-        struct betree_sub* sub
+        const struct betree_sub* sub
             = betree_make_sub_err(tree, idx, constants_count, constants, exprs[i]);
         betree_insert_sub_err(tree, sub);
     }

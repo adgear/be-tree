@@ -569,14 +569,14 @@ const struct betree_sub* betree_make_sub_err(struct betree_err* tree,
 bool betree_insert_sub_err(struct betree_err* tree, const struct betree_sub* sub)
 {
     if(!insert_be_tree_err(tree->config, sub, tree->cnode, NULL)) return false;
-    arraylist_add(tree->sub_ids, sub->id);
+    arraylist_add(tree->sub_ids, (void*)sub->id);
     return true;
 }
 
 bool betree_insert_err(struct betree_err* tree, betree_sub_t id, const char* expr)
 {
     if(!betree_insert_with_constants_err(tree, id, 0, NULL, expr)) return false;
-    arraylist_add(tree->sub_ids, id);
+    arraylist_add(tree->sub_ids, (void*)id);
     return true;
 }
 
@@ -680,6 +680,9 @@ struct report_err* make_report_err(const struct betree_err* betree)
 
 void free_report_err(struct report_err* report)
 {
+#ifndef NIF
+    betree_reason_map_destroy(report->reason_sub_id_list);
+#endif
     bfree(report->subs);
     bfree(report);
 }

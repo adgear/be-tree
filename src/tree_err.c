@@ -1302,16 +1302,6 @@ static void free_pdir_err(struct pdir_err* pdir)
     bfree(pdir);
 }
 
-static void free_pred(struct betree_variable* pred)
-{
-    if(pred == NULL) {
-        return;
-    }
-    bfree((char*)pred->attr_var.attr);
-    free_value(pred->value);
-    bfree(pred);
-}
-
 void free_lnode_err(struct lnode_err* lnode)
 {
     if(lnode == NULL) {
@@ -1406,161 +1396,6 @@ struct betree_sub* find_sub_id_err(betree_sub_t id, struct cnode_err* cnode)
     return NULL;
 }
 
-static void fill_pred_attr_var(struct betree_sub* sub, struct attr_var attr_var)
-{
-    set_bit(sub->attr_vars, attr_var.var);
-}
-
-static enum short_circuit_e short_circuit_for_attr_var(
-    betree_var_t id, bool inverted, struct attr_var attr_var)
-{
-    if(id == attr_var.var) {
-        if(inverted) {
-            return SHORT_CIRCUIT_PASS;
-        }
-        return SHORT_CIRCUIT_FAIL;
-    }
-    return SHORT_CIRCUIT_NONE;
-}
-
-static enum short_circuit_e short_circuit_for_node(
-    betree_var_t id, bool inverted, const struct ast_node* node)
-{
-    switch(node->type) {
-        case AST_TYPE_IS_NULL_EXPR:
-            switch(node->is_null_expr.type) {
-                case AST_IS_NULL:
-                    return short_circuit_for_attr_var(id, !inverted, node->is_null_expr.attr_var);
-                case AST_IS_NOT_NULL:
-                    return short_circuit_for_attr_var(id, inverted, node->is_null_expr.attr_var);
-                case AST_IS_EMPTY:
-                    return short_circuit_for_attr_var(id, inverted, node->is_null_expr.attr_var);
-                default:
-                    abort();
-            }
-        case AST_TYPE_COMPARE_EXPR:
-            return short_circuit_for_attr_var(id, inverted, node->compare_expr.attr_var);
-        case AST_TYPE_EQUALITY_EXPR:
-            return short_circuit_for_attr_var(id, inverted, node->equality_expr.attr_var);
-        case AST_TYPE_BOOL_EXPR:
-            switch(node->bool_expr.op) {
-                case AST_BOOL_LITERAL:
-                    return SHORT_CIRCUIT_NONE;
-                case AST_BOOL_OR: {
-                    enum short_circuit_e lhs
-                        = short_circuit_for_node(id, inverted, node->bool_expr.binary.lhs);
-                    enum short_circuit_e rhs
-                        = short_circuit_for_node(id, inverted, node->bool_expr.binary.rhs);
-                    if(lhs == SHORT_CIRCUIT_PASS || rhs == SHORT_CIRCUIT_PASS) {
-                        return SHORT_CIRCUIT_PASS;
-                    }
-                    if(lhs == SHORT_CIRCUIT_FAIL && rhs == SHORT_CIRCUIT_FAIL) {
-                        return SHORT_CIRCUIT_FAIL;
-                    }
-                    return SHORT_CIRCUIT_NONE;
-                }
-                case AST_BOOL_AND: {
-                    enum short_circuit_e lhs
-                        = short_circuit_for_node(id, inverted, node->bool_expr.binary.lhs);
-                    enum short_circuit_e rhs
-                        = short_circuit_for_node(id, inverted, node->bool_expr.binary.rhs);
-                    if(lhs == SHORT_CIRCUIT_FAIL || rhs == SHORT_CIRCUIT_FAIL) {
-                        return SHORT_CIRCUIT_FAIL;
-                    }
-                    if(lhs == SHORT_CIRCUIT_PASS && rhs == SHORT_CIRCUIT_PASS) {
-                        return SHORT_CIRCUIT_PASS;
-                    }
-                    return SHORT_CIRCUIT_NONE;
-                }
-                case AST_BOOL_NOT:
-                    return short_circuit_for_node(id, !inverted, node->bool_expr.unary.expr);
-                case AST_BOOL_VARIABLE:
-                    return short_circuit_for_attr_var(id, inverted, node->bool_expr.variable);
-                default:
-                    abort();
-            }
-        case AST_TYPE_SET_EXPR:
-            if(node->set_expr.left_value.value_type == AST_SET_LEFT_VALUE_VARIABLE) {
-                return short_circuit_for_attr_var(
-                    id, inverted, node->set_expr.left_value.variable_value);
-            }
-            else {
-                return short_circuit_for_attr_var(
-                    id, inverted, node->set_expr.right_value.variable_value);
-            }
-        case AST_TYPE_LIST_EXPR:
-            return short_circuit_for_attr_var(id, inverted, node->list_expr.attr_var);
-        case AST_TYPE_SPECIAL_EXPR:
-            switch(node->special_expr.type) {
-                case AST_SPECIAL_FREQUENCY: {
-                    enum short_circuit_e frequency = short_circuit_for_attr_var(
-                        id, inverted, node->special_expr.frequency.attr_var);
-                    enum short_circuit_e now = short_circuit_for_attr_var(
-                        id, inverted, node->special_expr.frequency.now);
-                    if(frequency == SHORT_CIRCUIT_FAIL || now == SHORT_CIRCUIT_FAIL) {
-                        return SHORT_CIRCUIT_FAIL;
-                    }
-                    if(frequency == SHORT_CIRCUIT_PASS && now == SHORT_CIRCUIT_PASS) {
-                        return SHORT_CIRCUIT_PASS;
-                    }
-                    return SHORT_CIRCUIT_NONE;
-                }
-                case AST_SPECIAL_SEGMENT: {
-                    enum short_circuit_e frequency = short_circuit_for_attr_var(
-                        id, inverted, node->special_expr.segment.attr_var);
-                    enum short_circuit_e now
-                        = short_circuit_for_attr_var(id, inverted, node->special_expr.segment.now);
-                    if(frequency == SHORT_CIRCUIT_FAIL || now == SHORT_CIRCUIT_FAIL) {
-                        return SHORT_CIRCUIT_FAIL;
-                    }
-                    if(frequency == SHORT_CIRCUIT_PASS && now == SHORT_CIRCUIT_PASS) {
-                        return SHORT_CIRCUIT_PASS;
-                    }
-                    return SHORT_CIRCUIT_NONE;
-                }
-                case AST_SPECIAL_GEO: {
-                    enum short_circuit_e latitude = short_circuit_for_attr_var(
-                        id, inverted, node->special_expr.geo.latitude_var);
-                    enum short_circuit_e longitude = short_circuit_for_attr_var(
-                        id, inverted, node->special_expr.geo.longitude_var);
-                    if(latitude == SHORT_CIRCUIT_FAIL || longitude == SHORT_CIRCUIT_FAIL) {
-                        return SHORT_CIRCUIT_FAIL;
-                    }
-                    if(latitude == SHORT_CIRCUIT_PASS && longitude == SHORT_CIRCUIT_PASS) {
-                        return SHORT_CIRCUIT_PASS;
-                    }
-                    return SHORT_CIRCUIT_NONE;
-                }
-                case AST_SPECIAL_STRING:
-                    return short_circuit_for_attr_var(
-                        id, inverted, node->special_expr.string.attr_var);
-                default:
-                    abort();
-            }
-        default:
-            abort();
-    }
-    return SHORT_CIRCUIT_NONE;
-}
-
-static void fill_short_circuit(struct config* config, struct betree_sub* sub)
-{
-    for(size_t i = 0; i < config->attr_domain_count; i++) {
-        struct attr_domain* attr_domain = config->attr_domains[i];
-        if(attr_domain->allow_undefined) {
-            enum short_circuit_e result
-                = short_circuit_for_node(attr_domain->attr_var.var, false, sub->expr);
-            if(result == SHORT_CIRCUIT_PASS) {
-                set_bit(sub->short_circuit.pass, i);
-            }
-            else if(result == SHORT_CIRCUIT_FAIL) {
-                set_bit(sub->short_circuit.fail, i);
-            }
-        }
-    }
-}
-
-int parse(const char* text, struct ast_node** node);
 int event_parse(const char* text, struct betree_event** event);
 
 betree_var_t find_pnode_attr_name(struct cdir_err* cdir)
@@ -1703,7 +1538,7 @@ void build_sub_ids_cnode(struct cnode_err* cn)
     if(cn->lnode) {
         for(size_t i = 0; i < cn->lnode->sub_count; i++) {
             if(cn->parent) {
-                arraylist_add(cn->parent->sub_ids, cn->lnode->subs[i]->id);
+                arraylist_add(cn->parent->sub_ids, (void*)cn->lnode->subs[i]->id);
             }
         }
     }

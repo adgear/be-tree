@@ -1,0 +1,43 @@
+digraph {
+    compound=true    node [fontsize=20, fontname="Verdana"];
+    "cnode_root" [label="c-node", color=darkolivegreen3, fillcolor=darkolivegreen3, style=filled, shape=circle, fixedsize=true, width=0.8]
+    "lnode_" [label="l-node", fillcolor=black, style=filled, fontcolor=white, shape=circle, fixedsize=true, width=0.8]
+    subgraph "clusterpdir_" {
+        color=lightpink; fillcolor=lightpink; style=filled; label="p-directory"; fontsize=20; fontname="Verdana"
+        "pnode__b" [label="b", color=cyan2, fillcolor=cyan2, style=filled, shape=record]
+    }
+    "pnode__b" [label="b", color=cyan2, fillcolor=cyan2, style=filled, shape=record]
+    "pnode__b_fake" [label="p-node", color=cyan2, fillcolor=cyan2, style=filled, shape=circle, fixedsize=true, width=0.8]
+    subgraph "clustercdir__b_false_true" {
+        color=orange; fillcolor=orange; style=filled; label="c-directory"; fontsize=20; fontname="Verdana"
+        cdir__b_false_true [fillcolor=darkolivegreen3, style=filled, shape=box, label=<
+            <table>
+                <tr>
+                    <td colspan="2" port="cdir__b_false_true">[false, true]</td>
+                </tr>
+                <tr>
+                    <td colspan="1" port="cdir__b_false_false">[false, false]</td>
+                    <td colspan="1" port="cdir__b_true_true">[true, true]</td>
+                </tr>
+            </table>
+        >]
+    }
+    "cnode__b_false_true" [label="c-node", color=darkolivegreen3, fillcolor=darkolivegreen3, style=filled, shape=circle, fixedsize=true, width=0.8]
+    "lnode__b_false_true" [label="l-node", fillcolor=black, style=filled, fontcolor=white, shape=circle, fixedsize=true, width=0.8]
+    "lnode__b_false_true_subs" [label=<\{S<sub>1</sub>, S<sub>2</sub>, S<sub>3</sub>\}>, color=lightblue1, fillcolor=lightblue1, style=filled, shape=record]
+    "cnode__b_false_false" [label="c-node", color=darkolivegreen3, fillcolor=darkolivegreen3, style=filled, shape=circle, fixedsize=true, width=0.8]
+    "lnode__b_false_false" [label="l-node", fillcolor=black, style=filled, fontcolor=white, shape=circle, fixedsize=true, width=0.8]
+    "lnode__b_false_false_subs" [label=<\{S<sub>4</sub>, S<sub>5</sub>\}>, color=lightblue1, fillcolor=lightblue1, style=filled, shape=record]
+    "cnode_root" -> "lnode_"
+    "cnode_root" -> "pnode__b" [lhead="clusterpdir_"]
+    "pnode__b" -> "pnode__b_fake"
+    "pnode__b_fake" -> "cdir__b_false_true" [lhead="clustercdir__b_false_true"]
+    cdir__b_false_true:cdir__b_false_true -> "cnode__b_false_true"
+    "cnode__b_false_true" -> "lnode__b_false_true"
+    "lnode__b_false_true" -> "lnode__b_false_true_subs"
+    cdir__b_false_true:cdir__b_false_false -> "cnode__b_false_false"
+    "cnode__b_false_false" -> "lnode__b_false_false"
+    "lnode__b_false_false" -> "lnode__b_false_false_subs"
+    { rank=same; "pnode__b_fake" }
+    { rank=same; "cnode__b_false_true", "cnode__b_false_false" }
+}
