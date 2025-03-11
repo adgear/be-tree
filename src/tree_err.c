@@ -23,36 +23,21 @@
 
 static betree_var_t find_pnode_attr_name(struct cdir_err* cdir);
 
-static bool is_id_in(uint64_t id, const uint64_t* ids, size_t sz)
-{
-    if(sz == 0) {
-        return false;
-    }
-    size_t first = 0;
-    size_t last = sz - 1;
-    if(id < ids[first] || id > ids[last]) {
-        return false;
-    }
-    size_t middle = (first + last) / 2;
-    while(first <= last) {
-        if(id == ids[middle]) {
-            return true;
-        }
-        if(ids[middle] < id) {
-            first = middle + 1;
-        }
-        else {
-            last = middle - 1;
-        }
-        middle = (first + last) / 2;
-    }
-    return false;
-}
-
 static void add_reason_sub_id_list(
     struct report_err* report, betree_var_t reason, betree_sub_t sub_id)
 {
     betree_reason_map_additem(report->reason_sub_id_list, reason, sub_id);
+}
+
+static void add_reason_sub_id_list_with_ids(struct report_err* report,
+    betree_var_t reason,
+    betree_sub_t sub_id,
+    const uint64_t* ids,
+    size_t sz)
+{
+    if(is_id_in(sub_id, ids, sz) == true) {
+        betree_reason_map_additem(report->reason_sub_id_list, reason, sub_id);
+    }
 }
 
 void set_reason_sub_id_lists(
@@ -60,6 +45,13 @@ void set_reason_sub_id_lists(
 {
     if(!sub_ids || sub_ids->size <= 0) return;
     betree_reason_map_join(report->reason_sub_id_list, reason, sub_ids);
+}
+
+void set_reason_sub_id_lists_from_ids(
+    struct report_err* report, betree_var_t reason, const uint64_t* ids, size_t sz)
+{
+    if(!ids || sz <= 0) return;
+    betree_reason_map_join_with_ids(report->reason_sub_id_list, reason, NULL, ids, sz);
 }
 
 static void search_cdir_ids_err(const struct config* config,
@@ -437,11 +429,12 @@ static void search_cdir_ids_err(const struct config* config,
             if(attr_var == INVALID_VAR) {
                 betree_var_t no_reason
                     = ADDITIONAL_REASON(config->attr_domain_count, REASON_UNKNOWN);
-                betree_reason_map_join(
-                    report->reason_sub_id_list, no_reason, cdir->lchild->sub_ids);
+                betree_reason_map_join_with_ids(
+                    report->reason_sub_id_list, no_reason, cdir->lchild->sub_ids, ids, sz);
             }
             else
-                betree_reason_map_join(report->reason_sub_id_list, attr_var, cdir->lchild->sub_ids);
+                betree_reason_map_join_with_ids(
+                    report->reason_sub_id_list, attr_var, cdir->lchild->sub_ids, ids, sz);
         }
     }
     if(is_event_enclosed_err(preds, cdir->rchild, false, open_right)) {
@@ -453,11 +446,12 @@ static void search_cdir_ids_err(const struct config* config,
             if(attr_var == INVALID_VAR) {
                 betree_var_t no_reason
                     = ADDITIONAL_REASON(config->attr_domain_count, REASON_UNKNOWN);
-                betree_reason_map_join(
-                    report->reason_sub_id_list, no_reason, cdir->rchild->sub_ids);
+                betree_reason_map_join_with_ids(
+                    report->reason_sub_id_list, no_reason, cdir->rchild->sub_ids, ids, sz);
             }
             else
-                betree_reason_map_join(report->reason_sub_id_list, attr_var, cdir->rchild->sub_ids);
+                betree_reason_map_join_with_ids(
+                    report->reason_sub_id_list, attr_var, cdir->rchild->sub_ids, ids, sz);
         }
     }
 }
@@ -1467,7 +1461,6 @@ bool betree_search_with_preds_err(const struct config* config,
     return true;
 }
 
-
 bool betree_search_with_preds_ids_err(const struct config* config,
     const struct betree_variable** preds,
     const struct cnode_err* cnode,
@@ -1497,7 +1490,7 @@ bool betree_search_with_preds_ids_err(const struct config* config,
             add_sub_err(sub->id, report);
         }
         else {
-            add_reason_sub_id_list(report, last_reason, sub->id);
+            add_reason_sub_id_list_with_ids(report, last_reason, sub->id, ids, sz);
         }
     }
     bfree(subs.subs);

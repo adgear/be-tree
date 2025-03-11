@@ -92,7 +92,8 @@ struct subs_to_eval {
 void init_subs_to_eval(struct subs_to_eval* subs);
 void init_subs_to_eval_ext(struct subs_to_eval* subs, size_t init);
 uint64_t* make_undefined(size_t attr_domain_count, const struct betree_variable** preds);
-uint64_t* make_undefined_with_count(size_t attr_domain_count, const struct betree_variable** preds, size_t* count);
+uint64_t* make_undefined_with_count(
+    size_t attr_domain_count, const struct betree_variable** preds, size_t* count);
 struct memoize make_memoize_with_count(size_t pred_count, size_t* count);
 void match_be_tree(const struct attr_domain** attr_domains,
     const struct betree_variable** preds,
@@ -101,7 +102,8 @@ void match_be_tree(const struct attr_domain** attr_domains,
 void match_be_tree_node_counting(const struct attr_domain** attr_domains,
     const struct betree_variable** preds,
     const struct cnode* cnode,
-    struct subs_to_eval* subs, int* node_count);
+    struct subs_to_eval* subs,
+    int* node_count);
 bool match_sub(size_t attr_domains_count,
     const struct betree_variable** preds,
     const struct betree_sub* sub,
@@ -122,7 +124,8 @@ void free_event(struct betree_event* event);
 
 bool sub_has_attribute(const struct betree_sub* sub, betree_var_t variable_id);
 bool sub_has_attribute_str(struct config* config, const struct betree_sub* sub, const char* attr);
-bool sub_is_enclosed(const struct attr_domain** attr_domains, const struct betree_sub* sub, const struct cdir* cdir);
+bool sub_is_enclosed(
+    const struct attr_domain** attr_domains, const struct betree_sub* sub, const struct cdir* cdir);
 
 struct lnode* make_lnode(const struct config* config, struct cnode* parent);
 void free_lnode(struct lnode* lnode);
@@ -150,7 +153,8 @@ struct betree_constant {
     struct value value;
 };
 
-//bool betree_delete_inner(size_t attr_domains_count, const struct attr_domain** attr_domains, struct betree_sub* sub, struct cnode* cnode);
+// bool betree_delete_inner(size_t attr_domains_count, const struct attr_domain** attr_domains,
+// struct betree_sub* sub, struct cnode* cnode);
 struct betree_sub* find_sub_id(betree_sub_t id, struct cnode* cnode);
 
 bool betree_search_with_preds(const struct config* config,
@@ -162,11 +166,15 @@ bool betree_search_with_preds_ids(const struct config* config,
     const struct cnode* cnode,
     struct report* report,
     const uint64_t* ids,
-    size_t sz
-    );
-bool betree_exists_with_preds(const struct config* config, const struct betree_variable** preds, const struct cnode* cnode);
+    size_t sz);
+bool betree_exists_with_preds(
+    const struct config* config, const struct betree_variable** preds, const struct cnode* cnode);
 
-bool insert_be_tree(const struct config* config, const struct betree_sub* sub, struct cnode* cnode, struct cdir* cdir);
+bool insert_be_tree(const struct config* config,
+    const struct betree_sub* sub,
+    struct cnode* cnode,
+    struct cdir* cdir);
 
 void sort_event_lists(struct betree_event* event);
 
+bool is_id_in(uint64_t id, const uint64_t* ids, size_t sz);

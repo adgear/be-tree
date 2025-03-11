@@ -607,7 +607,7 @@ bool betree_search_with_event_filled_ids_err(const struct betree_err* betree,
         fprintf(stderr, "Failed to validate event\n");
         betree_var_t invalid_event
             = ADDITIONAL_REASON(betree->config->attr_domain_count, REASON_INVALID_EVENT);
-        set_reason_sub_id_lists(report, invalid_event, betree->sub_ids);
+        set_reason_sub_id_lists_from_ids(report, invalid_event, ids, sz);
         return false;
     }
     return betree_search_with_preds_ids_err(
@@ -878,6 +878,30 @@ void betree_reason_map_join(
     assert(m->reasons[reason]);
     assert(m->reasons[reason]->list);
     if(sub_ids->size > 0) arraylist_join(m->reasons[reason]->list, sub_ids);
+}
+
+void betree_reason_map_join_with_ids(struct betree_reason_map_t* m,
+    betree_var_t reason,
+    struct arraylist* sub_ids,
+    const uint64_t* ids,
+    size_t sz)
+{
+    assert(reason < m->size);
+    assert(m->reasons);
+    assert(m->reasons[reason]);
+    assert(m->reasons[reason]->list);
+    if(sub_ids == NULL) {
+        for(size_t i = 0; i < sz; i++) {
+            arraylist_add(m->reasons[reason]->list, (void*)ids[i]);
+        }
+    }
+    else {
+        for(size_t i = 0; i < sub_ids->size; i++) {
+            if(is_id_in((betree_sub_t)(sub_ids->body[i]), ids, sz) == true) {
+                arraylist_add(m->reasons[reason]->list, (void*)ids[i]);
+            }
+        }
+    }
 }
 
 void betree_reason_map_destroy(struct betree_reason_map_t* reason)
