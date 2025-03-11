@@ -137,9 +137,4 @@ void betree_reason_map_additem(
     struct betree_reason_map_t* l, betree_var_t reason, betree_sub_t value);
 void betree_reason_map_join(
     struct betree_reason_map_t* l, betree_var_t reason, struct arraylist* sub_ids);
-void betree_reason_map_join_with_ids(struct betree_reason_map_t* m,
-    betree_var_t reason,
-    struct arraylist* sub_ids,
-    const uint64_t* ids,
-    size_t sz);
 void betree_reason_map_destroy(struct betree_reason_map_t* reason);
