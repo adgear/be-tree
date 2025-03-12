@@ -62,6 +62,15 @@ void set_reason_sub_id_lists(
     betree_reason_map_join(report->reason_sub_id_list, reason, sub_ids);
 }
 
+void set_reason_sub_id_lists_from_ids(
+    struct report_err* report, betree_var_t reason, const uint64_t* ids, size_t sz)
+{
+    if(!ids || sz <= 0) return;
+    for(size_t i = 0; i < sz; i++) {
+        betree_reason_map_additem(report->reason_sub_id_list, reason, ids[i]);
+    }
+}
+
 static void search_cdir_ids_err(const struct config* config,
     const struct betree_variable** preds,
     struct cdir_err* cdir,
