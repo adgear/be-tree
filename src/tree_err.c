@@ -56,7 +56,7 @@ static void add_reason_sub_id_list(
 }
 
 void set_reason_sub_id_lists(
-    struct report_err* report, betree_var_t reason, struct arraylist* sub_ids)
+    struct report_err* report, betree_var_t reason, dynamic_array_t* sub_ids)
 {
     if(!sub_ids || sub_ids->size <= 0) return;
     betree_reason_map_join(report->reason_sub_id_list, reason, sub_ids);
@@ -806,7 +806,7 @@ static struct cdir_err* create_cdir_err(const struct config* config,
     cdir->cnode = make_cnode_err(config, cdir);
     cdir->lchild = NULL;
     cdir->rchild = NULL;
-    cdir->sub_ids = arraylist_create();
+    cdir->sub_ids = create_dynamic_array(INITIAL_CAPACITY);
     return cdir;
 }
 
@@ -1343,7 +1343,7 @@ static void free_cdir_err(struct cdir_err* cdir)
         return;
     }
     bfree((char*)cdir->attr_var.attr);
-    if(cdir->sub_ids) arraylist_destroy(cdir->sub_ids);
+    if(cdir->sub_ids) destroy_dynamic_array(cdir->sub_ids);
     free_cnode_err(cdir->cnode);
     cdir->cnode = NULL;
     free_cdir_err(cdir->lchild);
@@ -1535,10 +1535,26 @@ void build_sub_ids_cdir(struct cdir_err* cd)
     if(cd->lchild) build_sub_ids_cdir(cd->lchild);
     if(cd->rchild) build_sub_ids_cdir(cd->rchild);
     if(cd->cnode) build_sub_ids_cnode(cd->cnode);
-    if(cd->lchild && cd->lchild->sub_ids->size > 0)
-        arraylist_join(cd->sub_ids, cd->lchild->sub_ids);
-    if(cd->rchild && cd->rchild->sub_ids->size > 0)
-        arraylist_join(cd->sub_ids, cd->rchild->sub_ids);
+    if(cd->lchild && cd->lchild->sub_ids && cd->lchild->sub_ids->size > 0) {
+        dynamic_array_t* old_sub_ids = cd->sub_ids;
+        if(old_sub_ids) {
+            dynamic_array_t* new_sub_ids = dynamic_array_merge(cd->sub_ids, cd->lchild->sub_ids);
+            if(new_sub_ids) {
+                cd->sub_ids = new_sub_ids;
+                destroy_dynamic_array(old_sub_ids);
+            }
+        }
+    }
+    if(cd->rchild && cd->rchild->sub_ids && cd->rchild->sub_ids->size > 0) {
+        dynamic_array_t* old_sub_ids = cd->sub_ids;
+        if(old_sub_ids) {
+            dynamic_array_t* new_sub_ids = dynamic_array_merge(cd->sub_ids, cd->rchild->sub_ids);
+            if(new_sub_ids) {
+                cd->sub_ids = new_sub_ids;
+                destroy_dynamic_array(old_sub_ids);
+            }
+        }
+    }
 }
 
 void build_sub_ids_cnode(struct cnode_err* cn)
@@ -1547,7 +1563,7 @@ void build_sub_ids_cnode(struct cnode_err* cn)
     if(cn->lnode) {
         for(size_t i = 0; i < cn->lnode->sub_count; i++) {
             if(cn->parent) {
-                arraylist_add(cn->parent->sub_ids, (void*)cn->lnode->subs[i]->id);
+                dynamic_array_add(cn->parent->sub_ids, cn->lnode->subs[i]->id);
             }
         }
     }
@@ -1557,9 +1573,17 @@ void build_sub_ids_cnode(struct cnode_err* cn)
             struct pnode_err* pn = cn->pdir->pnodes[i];
             if(!pn) continue;
             struct cdir_err* cd = pn->cdir;
-            if(cd) build_sub_ids_cdir(cd);
-            if(cn->parent && cd->sub_ids->size > 0)
-                arraylist_join(cn->parent->sub_ids, cd->sub_ids);
+            if(cd && cd->sub_ids) build_sub_ids_cdir(cd);
+            if(cn->parent && cd->sub_ids && cd->sub_ids->size > 0) {
+                dynamic_array_t* old_sub_ids = cn->parent->sub_ids;
+                if(old_sub_ids) {
+                    dynamic_array_t* new_sub_ids = dynamic_array_merge(cn->parent->sub_ids, cd->sub_ids);
+                    if(new_sub_ids) {
+                        cn->parent->sub_ids = new_sub_ids;
+                        destroy_dynamic_array(old_sub_ids);
+                    }
+                }
+            }
         }
     }
 }

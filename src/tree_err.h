@@ -49,7 +49,7 @@ struct cdir_err {
     struct cnode_err* cnode;
     struct cdir_err* lchild;
     struct cdir_err* rchild;
-    struct arraylist* sub_ids;
+    dynamic_array_t* sub_ids;
 };
 
 struct pdir_err {
@@ -116,6 +116,6 @@ void build_sub_ids_cdir(struct cdir_err* cd);
 void build_sub_ids_cnode(struct cnode_err* cn);
 
 void set_reason_sub_id_lists(
-    struct report_err* report, betree_var_t reason, struct arraylist* sub_ids);
+    struct report_err* report, betree_var_t reason, dynamic_array_t* sub_ids);
 void set_reason_sub_id_lists_from_ids(
     struct report_err* report, betree_var_t reason, const uint64_t* ids, size_t sz);

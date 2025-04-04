@@ -1,6 +1,6 @@
 #pragma once
 
-#include "arraylist.h"
+#include "dyn_arr.h"
 #include "value.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -13,12 +13,12 @@ struct cnode_err;
 struct betree_err {
     struct config* config;
     struct cnode_err* cnode;
-    struct arraylist* sub_ids;
+    dynamic_array_t* sub_ids;
 };
 
 struct betree_reason_t {
     char* name;
-    struct arraylist* list;
+    dynamic_array_t* list;
 };
 
 enum addtional_reason_t {
@@ -132,9 +132,9 @@ void betree_reason_destroy(struct betree_reason_t* reason);
 
 struct betree_reason_map_t* betree_reason_map_create(const struct betree_err* betree);
 unsigned int betree_reason_map_size(struct betree_reason_map_t* m);
-struct arraylist* betree_reason_map_get(struct betree_reason_map_t* l, betree_var_t reason);
+dynamic_array_t* betree_reason_map_get(struct betree_reason_map_t* l, betree_var_t reason);
 void betree_reason_map_additem(
     struct betree_reason_map_t* l, betree_var_t reason, betree_sub_t value);
 void betree_reason_map_join(
-    struct betree_reason_map_t* l, betree_var_t reason, struct arraylist* sub_ids);
+    struct betree_reason_map_t* l, betree_var_t reason, dynamic_array_t* sub_ids);
 void betree_reason_map_destroy(struct betree_reason_map_t* reason);

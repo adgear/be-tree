@@ -19,6 +19,7 @@
 #include "tree_err.h"
 #include "utils.h"
 #include "value.h"
+#include "dyn_arr.h"
 
 int parse(const char* text, struct ast_node** node);
 int event_parse(const char* text, struct betree_event** event);
@@ -569,14 +570,14 @@ const struct betree_sub* betree_make_sub_err(struct betree_err* tree,
 bool betree_insert_sub_err(struct betree_err* tree, const struct betree_sub* sub)
 {
     if(!insert_be_tree_err(tree->config, sub, tree->cnode, NULL)) return false;
-    arraylist_add(tree->sub_ids, (void*)sub->id);
+    dynamic_array_add(tree->sub_ids, sub->id);
     return true;
 }
 
 bool betree_insert_err(struct betree_err* tree, betree_sub_t id, const char* expr)
 {
     if(!betree_insert_with_constants_err(tree, id, 0, NULL, expr)) return false;
-    arraylist_add(tree->sub_ids, (void*)id);
+    dynamic_array_add(tree->sub_ids, id);
     return true;
 }
 
@@ -691,7 +692,8 @@ static void betree_init_with_config_err(struct betree_err* betree, struct config
 {
     betree->config = config;
     betree->cnode = make_cnode_err(betree->config, NULL);
-    betree->sub_ids = arraylist_create();
+    dynamic_array_t* new_list = create_dynamic_array(INITIAL_CAPACITY);
+    if(new_list) betree->sub_ids = new_list;
 }
 
 void betree_init_err(struct betree_err* betree)
@@ -728,7 +730,7 @@ void betree_deinit_err(struct betree_err* betree)
 {
     free_cnode_err(betree->cnode);
     free_config(betree->config);
-    arraylist_destroy(betree->sub_ids);
+    destroy_dynamic_array(betree->sub_ids);
 }
 
 void betree_free_err(struct betree_err* betree)
@@ -812,7 +814,7 @@ struct betree_reason_t* betree_reason_create(const char* reason_name)
 {
     struct betree_reason_t* res = (struct betree_reason_t*)bmalloc(sizeof(struct betree_reason_t));
     res->name = bstrdup(reason_name);
-    res->list = arraylist_create();
+    res->list = create_dynamic_array(INITIAL_CAPACITY);
     return res;
 }
 
@@ -820,7 +822,7 @@ void betree_reason_destroy(struct betree_reason_t* reason)
 {
     if(reason) {
         if(reason->name) bfree(reason->name);
-        if(reason->list) arraylist_destroy(reason->list);
+        if(reason->list) destroy_dynamic_array(reason->list);
         bfree(reason);
     }
 }
@@ -852,7 +854,7 @@ unsigned int betree_reason_map_size(struct betree_reason_map_t* m)
     return m->size;
 }
 
-struct arraylist* betree_reason_map_get(struct betree_reason_map_t* m, betree_var_t reason)
+dynamic_array_t* betree_reason_map_get(struct betree_reason_map_t* m, betree_var_t reason)
 {
     assert(reason < m->size);
     assert(m->reasons);
@@ -863,21 +865,24 @@ struct arraylist* betree_reason_map_get(struct betree_reason_map_t* m, betree_va
 void betree_reason_map_additem(
     struct betree_reason_map_t* m, betree_var_t reason, betree_sub_t value)
 {
-    assert(reason < m->size);
-    assert(m->reasons);
-    assert(m->reasons[reason]);
-    assert(m->reasons[reason]->list);
-    arraylist_add(m->reasons[reason]->list, (void*)value);
+    if(reason >= m->size || !(m->reasons) || !(m->reasons[reason]) || !(m->reasons[reason]->list)) return;
+    dynamic_array_add(m->reasons[reason]->list, value);
 }
 
 void betree_reason_map_join(
-    struct betree_reason_map_t* m, betree_var_t reason, struct arraylist* sub_ids)
+    struct betree_reason_map_t* m, betree_var_t reason, dynamic_array_t* sub_ids)
 {
-    assert(reason < m->size);
-    assert(m->reasons);
-    assert(m->reasons[reason]);
-    assert(m->reasons[reason]->list);
-    if(sub_ids->size > 0) arraylist_join(m->reasons[reason]->list, sub_ids);
+    if(reason >= m->size || !(m->reasons) || !(m->reasons[reason]) || !(m->reasons[reason]->list)) return;
+    if(sub_ids->size > 0) {
+        dynamic_array_t* old_list = m->reasons[reason]->list;
+        if(old_list) {
+            dynamic_array_t* new_list = dynamic_array_merge(old_list, sub_ids);
+            if(new_list) {
+                m->reasons[reason]->list = new_list;
+                destroy_dynamic_array(old_list);
+            }
+        }
+    }
 }
 
 void betree_reason_map_destroy(struct betree_reason_map_t* reason)
