@@ -114,11 +114,7 @@ bool betree_search_with_event_ids_err(const struct betree_err* betree,
 
 // bool betree_delete(struct betree_err* betree, betree_sub_t id);
 
-#if defined(USE_REASONLIST)
 struct report_err* make_report_err(const struct betree_err* betree);
-#else
-struct report_err* make_report_err();
-#endif
 void free_report_err(struct report_err* report);
 
 /*

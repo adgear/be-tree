@@ -14,8 +14,10 @@
 #include "betree.h"
 #include "betree_err.h"
 #include "debug.h"
+#include "debug_err.h"
 #include "hashmap.h"
 #include "helper.h"
+#include "helper_err.h"
 #include "printer.h"
 #include "tree.h"
 #include "tree_err.h"
@@ -172,7 +174,7 @@ void read_betree_defs(struct betree_err* tree)
 
     char line[LINE_MAX];
     while(fgets(line, sizeof(line), f)) {
-        add_variable_from_string(tree, line);
+        add_variable_from_string_err(tree, line);
     }
 
     fclose(f);
