@@ -12,11 +12,15 @@
 #include <valgrind/callgrind.h>
 
 #include "betree.h"
+#include "betree_err.h"
 #include "debug.h"
+#include "debug_err.h"
 #include "hashmap.h"
 #include "helper.h"
+#include "helper_err.h"
 #include "printer.h"
 #include "tree.h"
+#include "tree_err.h"
 #include "utils.h"
 
 #define MAX_EXPRS 10000
@@ -104,7 +108,7 @@ size_t read_betree_events(struct betree_events* events)
     return count;
 }
 
-size_t read_betree_exprs(struct betree* tree)
+size_t read_betree_exprs(struct betree_err* tree)
 {
 
     FILE* f = fopen(EXPRS_FILE, "r");
@@ -135,7 +139,7 @@ size_t read_betree_exprs(struct betree* tree)
         };
 
         const struct betree_sub* sub
-            = betree_make_sub(tree, boolean_expression_id, constant_count, constants, line);
+            = betree_make_sub_err(tree, boolean_expression_id, constant_count, constants, line);
         subs[count] = sub;
         count++;
         betree_free_constants(constant_count, (struct betree_constant**)constants);
@@ -153,22 +157,24 @@ size_t read_betree_exprs(struct betree* tree)
 
     for(size_t i = 0; i < count; i++) {
         const struct betree_sub* sub = subs[i];
-        if(!betree_insert_sub(tree, sub)) {
+        if(!betree_insert_sub_err(tree, sub)) {
             printf("Can't insert expr %zu\n", i);
             abort();
         }
     }
 
+    betree_make_sub_ids(tree);
+
     return count;
 }
 
-void read_betree_defs(struct betree* tree)
+void read_betree_defs(struct betree_err* tree)
 {
     FILE* f = fopen("data/betree_defs_basic", "r");
 
     char line[LINE_MAX];
     while(fgets(line, sizeof(line), f)) {
-        add_variable_from_string(tree, line);
+        add_variable_from_string_err(tree, line);
     }
 
     fclose(f);
@@ -196,7 +202,7 @@ int main(int argc, char** argv)
     struct timespec start, insert_done, gen_event_done, search_done;
 
     // Init
-    struct betree* tree = betree_make();
+    struct betree_err* tree = betree_make_err();
     read_betree_defs(tree);
 
     clock_gettime(CLOCK_MONOTONIC_RAW, &start);
@@ -231,8 +237,8 @@ int main(int argc, char** argv)
             clock_gettime(CLOCK_MONOTONIC_RAW, &gen_event_done);
 
             char* event = events.events[i];
-            struct report* report = make_report();
-            if(betree_search(tree, event, report) == false) {
+            struct report_err* report = make_report_err(tree);
+            if(betree_search_err(tree, event, report) == false) {
                 fprintf(stderr, "Failed to search with event\n");
                 abort();
             }
@@ -260,7 +266,7 @@ int main(int argc, char** argv)
             //     }
             // }
             // printf("]\n");
-            free_report(report);
+            free_report_err(report);
             search_us_i++;
         }
         printf("Finished run %zu/%zu\n", j, search_count);
@@ -319,10 +325,10 @@ int main(int argc, char** argv)
     printf("max expression matched: %ld\n", max_match_expression);
     printf("no  expression matched: %d\n", zero_boolean_expression_match);
     // DEBUG
-    write_dot_file(tree);
+    write_dot_file_err(tree);
     // DEBUG
 
     free(events.events);
-    betree_free(tree);
+    betree_free_err(tree);
     return 0;
 }
